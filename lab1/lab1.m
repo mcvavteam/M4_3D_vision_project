@@ -70,7 +70,10 @@ p7 = [A(i,1) A(i,2) 1]';
 p8 = [A(i,3) A(i,4) 1]';
 
 % ToDo: compute the lines l1, l2, l3, l4, that pass through the different pairs of points
-
+l1=pinv([p1';p2';0 1 0])*[0;0;1];
+l2=pinv([p3';p4';0 1 0])*[0;0;1];
+l3=pinv([p5';p6';0 1 0])*[0;0;1];
+l4=pinv([p7';p8';0 1 0])*[0;0;1];
 
 % show the chosen lines in the image
 figure;imshow(I);
@@ -87,6 +90,10 @@ I2 = apply_H(I, H);
 figure; imshow(uint8(I2));
 
 % ToDo: compute the transformed lines lr1, lr2, lr3, lr4
+lr1 = inv(H)'*l1;
+lr2 = inv(H)'*l2;
+lr3 = inv(H)'*l3;
+lr4 = inv(H)'*l4;
 
 % show the transformed lines in the transformed image
 figure;imshow(uint8(I2));
