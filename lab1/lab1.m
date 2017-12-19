@@ -53,7 +53,7 @@ H = [A, t;
 
 I2 = apply_H(I, H);
 figure; imshow(I); figure; imshow(uint8(I2));
-
+%%
 % ToDo: decompose the affinity in four transformations: two
 % rotations, a scale, and a translation
 R_theta = [cos(theta) -sin(theta) 0;    % Rotation matrix 1
@@ -169,23 +169,23 @@ l_inf = l_inf./l_inf(3);
 
 H = [1 0 0; 0 1 0; l_inf(1) l_inf(2) l_inf(3)];
 
-I2 = apply_H(I, inv(H));
+I2 = apply_H(I, H);%inv(H));
 figure; imshow(uint8(I2));
 
 % ToDo: compute the transformed lines lr1, lr2, lr3, lr4
-lr1 = H'*l1;
+lr1 = inv(H)'*l1;
 % lr1./sqrt(lr1(1)^2+lr1(2)^2)
 lr1 = lr1./lr1(3);
 
-lr2 = H'*l2;
+lr2 = inv(H)'*l2;
 % lr2./sqrt(lr2(1)^2+lr2(2)^2)
 lr2 = lr2./lr2(3);
 
-lr3 = H'*l3;
+lr3 = inv(H)'*l3;
 % lr3./sqrt(lr3(1)^2+lr3(2)^2)
 lr3 = lr3./lr3(3);
 
-lr4 = H'*l4;
+lr4 = inv(H)'*l4;
 % lr4./sqrt(lr4(1)^2+lr4(2)^2)
 lr4 = lr4./lr4(3);
 
@@ -202,12 +202,12 @@ plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
 % of lines before and after the image transformation
 
 %Angles before transformation
-angle12 = acos(l1(1)*l3(1) + l1(2)*l3(2))*(180/pi)
-angle34 = acos(l2(1)*l4(1) + l2(2)*l4(2))*(180/pi)
+angle12 = acos(l1(1)*l2(1) + l1(2)*l2(2))*(180/pi)
+angle34 = acos(l3(1)*l4(1) + l3(2)*l4(2))*(180/pi)
 
 %Angles after transformation
-angle12p = acos(lr1(1)*lr3(1) + lr1(2)*lr3(2))*(180/pi)
-angle34p = acos(lr2(1)*lr4(1) + lr2(2)*lr4(2))*(180/pi)
+angle12p = acos(lr1(1)*lr2(1) + lr1(2)*lr2(2))*(180/pi)
+angle34p = acos(lr3(1)*lr4(1) + lr3(2)*lr4(2))*(180/pi)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3. Metric Rectification
