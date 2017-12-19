@@ -200,14 +200,19 @@ plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
 
 % ToDo: to evaluate the results, compute the angle between the different pair 
 % of lines before and after the image transformation
+omega_inf = eye(3); omega_inf(3,3)=0;
 
-%Angles before transformation
-angle12 = acos(l1(1)*l2(1) + l1(2)*l2(2))*(180/pi)
-angle34 = acos(l3(1)*l4(1) + l3(2)*l4(2))*(180/pi)
+angle13 = acos(dot(omega_inf*l1,l3) / ...
+    ( sqrt(dot(omega_inf*l1,l1)) * sqrt(dot(omega_inf*l3,l3)) ) )*(180/pi);
+angle24 = acos(dot(omega_inf*l2,l4) / ...
+    ( sqrt(dot(omega_inf*l2,l2)) * sqrt(dot(omega_inf*l4,l4)) ) )*(180/pi);
+fprintf('Angles before affine rectification: %.4f and %.4f\n',angle13,angle24);
+angle13p = acos(dot(omega_inf*lr1,lr3) / ...
+    ( sqrt(dot(omega_inf*lr1,lr1)) * sqrt(dot(omega_inf*lr3,lr3)) ) )*(180/pi);
+angle24p = acos(dot(omega_inf*lr2,lr4) / ...
+    ( sqrt(dot(omega_inf*lr2,lr2)) * sqrt(dot(omega_inf*lr4,lr4)) ) )*(180/pi);
+fprintf('Angles after affine rectification: %.4f and %.4f\n',angle13p,angle24p);
 
-%Angles after transformation
-angle12p = acos(lr1(1)*lr2(1) + lr1(2)*lr2(2))*(180/pi)
-angle34p = acos(lr3(1)*lr4(1) + lr3(2)*lr4(2))*(180/pi)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3. Metric Rectification
