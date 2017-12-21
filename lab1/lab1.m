@@ -515,13 +515,9 @@ p16 = [A(i,3) A(i,4) 1]';
 
 % Compute the lines 
 l1 = cross(p1,p2);
-% l1 = l1./l1(3);
 l2 = cross(p3,p4);
-% l2 = l2./l2(3);
 l3 = cross(p5,p6);
-% l3 = l3./l3(3);
 l4 = cross(p7,p8);
-% l4 = l4./l4(3);
 
 x1 = cross(l1,l3);
 x1 = x1./x1(3);
@@ -536,13 +532,9 @@ d1 = cross(x1, x2);
 d2 = cross(x3, x4);
 
 l5 = cross(p9,p10);
-% l5 = l5./l5(3);
 l6 = cross(p11,p12);
-% l6 = l6./l6(3);
 l7 = cross(p13,p14);
-% l7 = l7./l7(3);
 l8 = cross(p15,p16);
-% l8 = l8./l8(3);
 
 x5 = cross(l5,l7);
 x5 = x5./x5(3);
@@ -614,26 +606,75 @@ B = [
     (l2(2)*l4(3)+ l2(3)*l4(2))/2,...
     l2(3)*l4(3)];
  
-%(l1m1,(l1m2 + l2m1)/2, l2m2,(l1m3 + l3m1)/2,(l2m3 + l3m2)/2, l3m3) c = 0
-
 c = null(B); % Null vector/space of B obtained from the SVD.
-
-% C =
-% a b/2 d/2
-% b/2 c e/2
-% d/2 e/2 f
 
 C = [c(1), c(2)/2, c(4)/2;
     c(2)/2, c(3), c(5)/2;
-    c(4)/2, c(5), c(6)];
+    c(4)/2, c(5)/2, c(6)];
 
-%%
-[U,S,V] = svd(C);
+[U,D,V] = svd(C);
+sqrtD = sqrt(D);
+U_T = transpose(U);
+A = U_T*sqrtD;
+A = A*V;
+H2 = eye(3);
+H2(1,1) = abs(A(1,1));
+H2(1,2) = A(1,2);
+H2(2,1) = A(2,1);
+H2(2,2) = abs(A(2,2));
+H = H2';
+H = inv(H);
 
-H = V';
-H = H./H(3,3);
-I2 = apply_H(I,H);
+[I2,corners] = apply_H(I,H);
+
+H(1,3) = round(min(corners(1,:)));
+H(2,3) = -round(min(corners(2,:)));
 
 figure,imshow(uint8(I2));
 
+% transform lines
+lr1 = inv(H)'*l1;
+lr2 = inv(H)'*l2;
+lr3 = inv(H)'*l3;
+lr4 = inv(H)'*l4;
+lr5 = inv(H)'*l5;
+lr6 = inv(H)'*l6;
+lr7 = inv(H)'*l7;
+lr8 = inv(H)'*l8;
+dr1 = inv(H)'*d1;
+dr2 = inv(H)'*d2;
+dr3 = inv(H)'*d3;
+dr4 = inv(H)'*d4;
+
+figure;imshow(uint8(I2));
+hold on;
+t=1:0.1:1000;
+plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'y');
+plot(t, -(lr2(1)*t + lr2(3)) / lr2(2), 'y');
+plot(t, -(lr3(1)*t + lr3(3)) / lr3(2), 'y');
+plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
+plot(t, -(lr5(1)*t + lr5(3)) / lr5(2), 'y');
+plot(t, -(lr6(1)*t + lr6(3)) / lr6(2), 'y');
+plot(t, -(lr7(1)*t + lr7(3)) / lr7(2), 'y');
+plot(t, -(lr8(1)*t + lr8(3)) / lr8(2), 'y');
+plot(t, -(dr1(1)*t + dr1(3)) / dr1(2), 'g');
+plot(t, -(dr2(1)*t + dr2(3)) / dr2(2), 'g');
+plot(t, -(dr3(1)*t + dr3(3)) / dr3(2), 'g');
+plot(t, -(dr4(1)*t + dr4(3)) / dr4(2), 'g');
+
+% Angles of lines before transformation:
+ang_l1_l3_before = compute_angle(l1, l3);
+ang_l5_l7_before = compute_angle(l5, l7);
+ang_d1_d2_before = compute_angle(d1, d2);
+fprintf('Angle of l1 and l3 before metric rectification = %f \n', ang_l1_l3_before)
+fprintf('Angle of l2 and l4 before metric rectification = %f \n', ang_l2_l4_before)
+fprintf('Angle of d1 and d2 before metric rectification = %f \n', ang_d1_d2_before)
+
+% Angles of lines after transformation:
+ang_l1_l3_after = compute_angle(lr1, lr3);
+ang_l5_l7_after = compute_angle(lr5, lr7);
+ang_d1_d2_after = compute_angle(dr1, dr2);
+fprintf('Angle of l1 and l3 after metric rectification = %f \n', ang_l1_l3_after)
+fprintf('Angle of l2 and l4 after metric rectification = %f \n', ang_l5_l7_after)
+fprintf('Angle of d1 and d2 after metric rectification = %f \n', ang_d1_d2_after)
 
