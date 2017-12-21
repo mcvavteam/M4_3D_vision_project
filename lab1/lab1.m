@@ -442,7 +442,10 @@ H_a(3,3) = 1;
 H_a = inv(H_a); %Important
 
 % Show the transformed image and lines:
-I3 = apply_H_2(I2, H_a,transformed_corners2);
+I3 = apply_H(I2, H_a);
+
+[x,y] = find(uint8(I3),1,'first');
+H_a(2,3) = x;
 
 % Rectified lines, now with only a similiratiy distortion with the real
 % world ones:
@@ -460,6 +463,7 @@ dm2 = inv(H_a)' * d2;
 dm2 = dm2./dm2(3);
 
 figure;imshow(uint8(I3));
+
 hold on;
 t=1:0.1:1000;
 plot(t, -(lm1(1)*t + lm1(3)) / lm1(2), 'g');
