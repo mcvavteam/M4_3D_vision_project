@@ -28,9 +28,11 @@ H = [s.*R, t;
      0, 0, 1];
  
 I2 = apply_H(I, H);
-figure(1);
-subplot(1,2,1); imshow(I);         title('Original Image');
-subplot(1,2,2); imshow(uint8(I2)); title('Similarity transformation');
+imshow(I);
+title('Original Image');
+figure; 
+imshow(uint8(I2)); 
+title('Similarity transformation');
 
 %% 1.2. Affinities
 % ToDo: generate a matrix H which produces an affine transformation
@@ -54,12 +56,11 @@ H = [A, t;
      0, 0, 1];
 
 I2 = apply_H(I, H);
-%figure; imshow(I); figure; imshow(uint8(I2));
-figure(2);
-subplot(1,2,1); imshow(I);         title('Original Image');
-subplot(1,2,2); imshow(uint8(I2)); title('Affine transformation');
 
-%%
+%figure; imshow(I); title('Original Image');
+figure; imshow(uint8(I2));
+title('Affine transformation');
+
 % ToDo: decompose the affinity in four transformations: two
 % rotations, a scale, and a translation
 R_theta = [cos(theta) -sin(theta) 0;    % Rotation matrix 1
@@ -123,10 +124,9 @@ H = [A, t;
      v', 1];
  
 I2 = apply_H(I, H);
-%figure; imshow(I); figure; imshow(uint8(I2));
-figure(1);
-subplot(1,2,1); imshow(I);         title('Original Image');
-subplot(1,2,2); imshow(uint8(I2)); title('Projective transformation');
+%figure; imshow(I); title('Original Image');
+figure; imshow(uint8(I2));
+title('Projective transformation');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2. Affine Rectification
 
@@ -159,7 +159,7 @@ l4 = cross(p7,p8);
 l4 = l4./l4(3);
 
 % show the chosen lines in the image
-% figure;imshow(I);
+% figure; imshow(I); title('Original Image');
 % hold on;
 % t=1:0.1:1000;
 % plot(t, -(l1(1)*t + l1(3)) / l1(2), 'y');
@@ -176,8 +176,7 @@ l_inf = l_inf./l_inf(3);
 
 H = [1 0 0; 0 1 0; l_inf(1) l_inf(2) l_inf(3)];
 
-I2 = apply_H(I, H);%inv(H));
-% figure; imshow(uint8(I2));
+I2 = apply_H(I, H);
 
 % ToDo: compute the transformed lines lr1, lr2, lr3, lr4
 lr1 = inv(H)'*l1;
@@ -193,7 +192,7 @@ lr4 = inv(H)'*l4;
 lr4 = lr4./lr4(3);
 
 % show the transformed lines in the transformed image
-figure;imshow(uint8(I2));
+figure;imshow(uint8(I2)); title('Affine rectification');
 hold on;
 t=1:0.1:1000;
 plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'y');
@@ -203,21 +202,9 @@ plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
 
 % ToDo: to evaluate the results, compute the angle between the different pair 
 % of lines before and after the image transformation
-
-% omega_inf = eye(3); omega_inf(3,3)=0;
-% angle12 = acos(dot(omega_inf*l1,l2) / ...
-%     ( sqrt(dot(omega_inf*l1,l1)) * sqrt(dot(omega_inf*l2,l2)) ) )*(180/pi);
-% angle34 = acos(dot(omega_inf*l3,l4) / ...
-%     ( sqrt(dot(omega_inf*l3,l3)) * sqrt(dot(omega_inf*l4,l4)) ) )*(180/pi);
-
 angle12 = compute_angle(l1,l2);
 angle34 = compute_angle(l3,l4);
 fprintf('Angles before affine rectification: %.4f and %.4f\n',angle12,angle34);
-
-% angle12p = acos(dot(omega_inf*lr1,lr2) / ...
-%     ( sqrt(dot(omega_inf*lr1,lr1)) * sqrt(dot(omega_inf*lr2,lr2)) ) )*(180/pi);
-% angle34p = acos(dot(omega_inf*lr3,lr4) / ...
-%     ( sqrt(dot(omega_inf*lr3,lr3)) * sqrt(dot(omega_inf*lr4,lr4)) ) )*(180/pi);
 
 angle12p = compute_angle(lr1,lr2);
 angle34p = compute_angle(lr3,lr4);
@@ -245,7 +232,7 @@ d1 = cross(x1, x2);
 d2 = cross(x3, x4);
 
 % Show the image and lines before metric rectification:
-% figure;imshow(uint8(I2));
+% figure;imshow(uint8(I2)); title('Original Image');
 % hold on;
 % t=1:0.1:1000;
 % plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'g');
@@ -269,10 +256,13 @@ K = chol(S, 'upper');
 H_a = zeros(3,3);
 H_a(1:2, 1:2) = K';
 H_a(3,3) = 1;
-H_a = inv(H_a); %Important
+H_a = inv(H_a);
 
 % Show the transformed image and lines:
-I3 = apply_H(I2, H_a);
+[I3,corners] = apply_H(I2, H_a);
+
+H_a(1,3) = round(min(corners(1,:)));
+H_a(2,3) = -round(min(corners(2,:)));
 
 % Rectified lines, now with only a similiratiy distortion with the real
 % world ones:
@@ -289,7 +279,7 @@ dm1 = dm1./dm1(3);
 dm2 = inv(H_a)' * d2;
 dm2 = dm2./dm2(3);
 
-figure;imshow(uint8(I3));
+figure;imshow(uint8(I3)); title('Metric rectification');
 hold on;
 t=1:0.1:1000;
 plot(t, -(lm1(1)*t + lm1(3)) / lm1(2), 'g');
@@ -353,7 +343,7 @@ l4 = cross(p7,p8);
 l4 = l4./l4(3);
 
 % show the chosen lines in the image
-figure;imshow(I);
+figure;imshow(I); title('Original image 0001');
 hold on;
 t=1:0.1:1000;
 plot(t, -(l1(1)*t + l1(3)) / l1(2), 'y');
@@ -371,7 +361,6 @@ l_inf = l_inf./l_inf(3);
 H = [1 0 0; 0 1 0; l_inf(1) l_inf(2) l_inf(3)];
 
 I2 = apply_H(I, H);
-% figure; imshow(uint8(I2));
 
 % ToDo: compute the transformed lines lr1, lr2, lr3, lr4
 lr1 = inv(H)'*l1;
@@ -387,20 +376,21 @@ lr4 = inv(H)'*l4;
 lr4 = lr4./lr4(3);
 
 % show the transformed lines in the transformed image
-figure;imshow(uint8(I2));
-hold on;
-t=1:0.1:1000;
-plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'y');
-plot(t, -(lr2(1)*t + lr2(3)) / lr2(2), 'y');
-plot(t, -(lr3(1)*t + lr3(3)) / lr3(2), 'y');
-plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
+% figure;imshow(uint8(I2)); title('Affine rectification of 0001');
+% hold on;
+% t=1:0.1:1000;
+% plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'y');
+% plot(t, -(lr2(1)*t + lr2(3)) / lr2(2), 'y');
+% plot(t, -(lr3(1)*t + lr3(3)) / lr3(2), 'y');
+% plot(t, -(lr4(1)*t + lr4(3)) / lr4(2), 'y');
 
 % Compute angles
 angle12 = compute_angle(l1,l2);
 angle34 = compute_angle(l3,l4);
+fprintf('Angles before affine rectification: %.4f and %.4f\n',angle12,angle34);
+
 angle12p = compute_angle(lr1,lr2);
 angle34p = compute_angle(lr3,lr4);
-fprintf('Angles before affine rectification: %.4f and %.4f\n',angle12,angle34);
 fprintf('Angles after affine rectification: %.4f and %.4f\n',angle12p,angle34p);
 
 %METRIC
@@ -415,13 +405,13 @@ d1 = cross(x1, x2);
 d2 = cross(x3, x4);
 
 % Show the image and lines before metric rectification:
-figure;imshow(uint8(I2));
-hold on;
-t=1:0.1:1000;
-plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'g');
-plot(t, -(lr3(1)*t + lr3(3)) / lr3(2), 'g');
-plot(t, -(d1(1)*t + d1(3)) / d1(2), 'y');
-plot(t, -(d2(1)*t + d2(3)) / d2(2), 'y');
+% figure;imshow(uint8(I2)); title('Before metric rectification of 0001');
+% hold on;
+% t=1:0.1:1000;
+% plot(t, -(lr1(1)*t + lr1(3)) / lr1(2), 'g');
+% plot(t, -(lr3(1)*t + lr3(3)) / lr3(2), 'g');
+% plot(t, -(d1(1)*t + d1(3)) / d1(2), 'y');
+% plot(t, -(d2(1)*t + d2(3)) / d2(2), 'y');
 
 % Matrix for the system of two equations:
 B = [lr1(1) * lr3(1), lr1(1) * lr3(2) + lr1(2) * lr3(1), lr1(2) * lr3(2);
@@ -439,7 +429,7 @@ K = chol(S, 'upper');
 H_a = zeros(3,3);
 H_a(1:2, 1:2) = K';
 H_a(3,3) = 1;
-H_a = inv(H_a); %Important
+H_a = inv(H_a); 
 
 % Show the transformed image and lines:
 [I3,corners] = apply_H(I2, H_a);
@@ -462,8 +452,7 @@ dm1 = dm1./dm1(3);
 dm2 = inv(H_a)' * d2;
 dm2 = dm2./dm2(3);
 
-figure;imshow(uint8(I3));
-
+figure;imshow(uint8(I3));title('Affine and metric rectification of 0001');
 hold on;
 t=1:0.1:1000;
 plot(t, -(lm1(1)*t + lm1(3)) / lm1(2), 'g');
@@ -488,42 +477,6 @@ ang_d1_d2_after = compute_angle(dm1, dm2);
 fprintf('Angle of l1 and l3 after metric rectification = %f \n', ang_l1_l3_after)
 fprintf('Angle of l2 and l4 after metric rectification = %f \n', ang_l2_l4_after)
 fprintf('Angle of d1 and d2 after metric rectification = %f \n', ang_d1_d2_after)
-
-%%
-corner1 = H_a*[1 1 1]';
-corner2 = H_a*[1 size(I2,1) 1]';
-
-corner2(2)-corner1(2)
-
-%%
-[rows, cols, chan] = size(I2);
-corners = zeros(4,3);
-corners(1,:) = [1 1 1]';
-corners(2,:) = [cols 1 1]';
-corners(3,:) = [1 rows 1]';
-corners(4,:) = [cols rows 1]';
-
-
-% Transform the image corners 
-transformed_corners = H*corners';
-
-% Make transformed_corners homogeneous
-for i=1:4,
-    transformed_corners(:,i) = transformed_corners(:,i)/transformed_corners(3,i);
-end
-
-% Compute the new extrenal transformed corner coordinates      
-xmin = round(min([transformed_corners(1,1), transformed_corners(1,2), ...
-                  transformed_corners(1,3), transformed_corners(1,4)]));
-
-xmax = round(max([transformed_corners(1,1), transformed_corners(1,2), ...
-                  transformed_corners(1,3), transformed_corners(1,4)]));
-
-ymin = round(min([transformed_corners(2,1), transformed_corners(2,2), ...
-                  transformed_corners(2,3), transformed_corners(2,4)]));
-ymax = round(max([transformed_corners(2,1), transformed_corners(2,2), ...
-                  transformed_corners(2,3), transformed_corners(2,4)]));
-                  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 5. OPTIONAL: Metric Rectification in a single step
