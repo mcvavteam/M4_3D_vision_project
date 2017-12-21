@@ -1,5 +1,5 @@
 
-function [image_transformed] = apply_H (image, H)
+function [image_transformed,transformed_corners] = apply_H (image, H)
 % Apply the transformation H to the given image
 % - image: nxmxc array, it can be a grayscale image or RGB image
 % - H: transformation to apply to the given image
@@ -8,32 +8,26 @@ function [image_transformed] = apply_H (image, H)
     [rows, cols, chan] = size(image);
 
     % Image corners in homogeneous coordinates.
-    corners = zeros(4,3);
-    corners(1,:) = [1 1 1]';
-    corners(2,:) = [cols 1 1]';
-    corners(3,:) = [1 rows 1]';
-    corners(4,:) = [cols rows 1]';
+    corners = zeros(3,4);
+    corners(:,1) = [1 1 1]';
+    corners(:,2) = [cols 1 1]';
+    corners(:,3) = [1 rows 1]';
+    corners(:,4) = [cols rows 1]';
 
 
     % Transform the image corners 
-    transformed_corners = H*corners';
+    transformed_corners = H*corners;
 
     % Make transformed_corners homogeneous
-    for i=1:4,
+    for i=1:4
         transformed_corners(:,i) = transformed_corners(:,i)/transformed_corners(3,i);
     end
 
     % Compute the new extrenal transformed corner coordinates      
-    xmin = round(min([transformed_corners(1,1), transformed_corners(1,2), ...
-                      transformed_corners(1,3), transformed_corners(1,4)]));
-
-    xmax = round(max([transformed_corners(1,1), transformed_corners(1,2), ...
-                      transformed_corners(1,3), transformed_corners(1,4)]));
-
-    ymin = round(min([transformed_corners(2,1), transformed_corners(2,2), ...
-                      transformed_corners(2,3), transformed_corners(2,4)]));
-    ymax = round(max([transformed_corners(2,1), transformed_corners(2,2), ...
-                      transformed_corners(2,3), transformed_corners(2,4)]));
+    xmin = round(min(transformed_corners(1,:)));
+    xmax = round(max(transformed_corners(1,:)));
+    ymin = round(min(transformed_corners(2,:)));
+    ymax = round(max(transformed_corners(2,:)));
 
     % Create a grid with the new image size
     [X,Y] = meshgrid(xmin:xmax, ymin:ymax);
