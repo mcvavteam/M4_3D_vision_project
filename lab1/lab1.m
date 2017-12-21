@@ -442,10 +442,10 @@ H_a(3,3) = 1;
 H_a = inv(H_a); %Important
 
 % Show the transformed image and lines:
-I3 = apply_H(I2, H_a);
+[I3,corners] = apply_H(I2, H_a);
 
-[x,y] = find(uint8(I3),1,'first');
-H_a(2,3) = x;
+H_a(1,3) = round(min(corners(1,:)));
+H_a(2,3) = -round(min(corners(2,:)));
 
 % Rectified lines, now with only a similiratiy distortion with the real
 % world ones:
