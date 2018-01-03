@@ -12,9 +12,9 @@ imargb = imread('Data/llanes/llanes_a.jpg');
 imbrgb = imread('Data/llanes/llanes_b.jpg');
 imcrgb = imread('Data/llanes/llanes_c.jpg');
 
-imargb = imread('Data/castle_int/0016_s.png');
-imbrgb = imread('Data/castle_int/0015_s.png');
-imcrgb = imread('Data/castle_int/0014_s.png');
+% imargb = imread('Data/castle_int/0016_s.png');
+% imbrgb = imread('Data/castle_int/0015_s.png');
+% imcrgb = imread('Data/castle_int/0014_s.png');
 
 % imargb = imread('Data/aerial/site13/frame00000.png');
 % imbrgb = imread('Data/aerial/site13/frame00002.png');
@@ -265,7 +265,7 @@ for i = 1:N
     R{i} = [r1, r2, cross(r1,r2)];
     
     % Ensure R is a rotation matrix
-    [U S V] = svd(R{i});
+    [U, S, V] = svd(R{i});
     R{i} = U * eye(3) * V';
    
     P{i} = K * [R{i} t{i}];
@@ -293,7 +293,7 @@ plot_camera(K * eye(3,4), 800, 600, 200);
 % ToDo: complete the call to the following function with the proper
 %       coordinates of the image corners in the new reference system
 for i = 1:N
-    vgg_scatter_plot( [...   ...   ...   ...   ...], 'r');
+%     vgg_scatter_plot( [...   ...   ...   ...   ...], 'r');
 end
 
 %% Augmented reality: Plot some 3D points on every camera.
@@ -314,12 +314,12 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 6. OPTIONAL: Detect the UPF logo in the two UPF images using the 
-%%              DLT algorithm (folder "logos").
-%%              Interpret and comment the results.
+%               DLT algorithm (folder "logos").
+%               Interpret and comment the results.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7. OPTIONAL: Replace the logo of the UPF by the master logo
-%%              in one of the previous images using the DLT algorithm.
+%               in one of the previous images using the DLT algorithm.
 
 
 
