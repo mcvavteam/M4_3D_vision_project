@@ -10,8 +10,8 @@ function [ H ] = homography2d(pt1, pt2)
 
     % Attempt to normalise each set of points so that the origin 
     % is at centroid and mean distance from origin is sqrt(2).
-%     [pt1, T1] = normalise2dpts(pt1);
-%     [pt2, T2] = normalise2dpts(pt2);
+    [pt1, T1] = normalise2dpts(pt1);
+    [pt2, T2] = normalise2dpts(pt2);
 
     % A initialization
     A = zeros(2*n,9);
@@ -42,7 +42,7 @@ function [ H ] = homography2d(pt1, pt2)
 
     % TODO. Reshape h to be a 3x3 matrix.
     H = reshape(h,3,3)';
-%     H = T2\H*T1;
+    H = T2\H*T1;
     H = H / H(3,3);
 
 end
