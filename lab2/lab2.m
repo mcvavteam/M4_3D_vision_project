@@ -12,9 +12,9 @@ imargb = imread('Data/llanes/llanes_a.jpg');
 imbrgb = imread('Data/llanes/llanes_b.jpg');
 imcrgb = imread('Data/llanes/llanes_c.jpg');
 
-imargb = imread('Data/castle_int/0016_s.png');
-imbrgb = imread('Data/castle_int/0015_s.png');
-imcrgb = imread('Data/castle_int/0014_s.png');
+% imargb = imread('Data/castle_int/0016_s.png');
+% imbrgb = imread('Data/castle_int/0015_s.png');
+% imcrgb = imread('Data/castle_int/0014_s.png');
 
 % imargb = imread('Data/aerial/site13/frame00000.png');
 % imbrgb = imread('Data/aerial/site13/frame00002.png');
@@ -253,17 +253,18 @@ for i = 1:N
     fprintf('done\n');
 
     % Fit homography and remove outliers.
-    x1 = pointsT(1:2, matches(1, :));
-    x2 = points{i}(1:2, matches(2, :));
+    x1 = [pointsT(1:2, matches(1, :)); ones(1, length(matches))];
+    x2 = [points{i}(1:2, matches(2, :)); ones(1, length(matches))];
+
     H{i} = 0;
-    [H{i}, inliers] =  ransac_homography_adaptive_loop(homog(x1), homog(x2), 3, 1000);
+    [H{i}, inliers] =  ransac_homography_adaptive_loop(x1, x2, 3, 1000);
 
     % Plot inliers.
     figure;
     plotmatches(Tg, Ig{i}, pointsT(1:2,:), points{i}(1:2,:), matches(:, inliers));
 
     % Play with the homography
-    %vgg_gui_H(T, I{i}, H{i});
+    vgg_gui_H(T, I{i}, H{i});
 end
 
 %% Compute the Image of the Absolute Conic
@@ -324,7 +325,7 @@ plot_camera(K * eye(3,4), 800, 600, 200);
 % ToDo: complete the call to the following function with the proper
 %       coordinates of the image corners in the new reference system
 for i = 1:N
-    vgg_scatter_plot( [...   ...   ...   ...   ...], 'r');
+%     vgg_scatter_plot( [...   ...   ...   ...   ...], 'r');
 end
 
 %% Augmented reality: Plot some 3D points on every camera.
