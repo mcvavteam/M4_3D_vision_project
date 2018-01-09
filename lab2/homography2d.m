@@ -1,7 +1,5 @@
 function [ H ] = homography2d(pt1, pt2)
-% The Direct Linear Transform (DLT) algorithm is a simple algorithm used
-% to solve for the homography matrix H given a sufficient set of point 
-% correspondences.
+% Direct Linear Transform (DLT) algorithm
 
     % Number of points
     [~,n1] = size(pt1);
@@ -13,10 +11,9 @@ function [ H ] = homography2d(pt1, pt2)
     [pt1, T1] = normalise2dpts(pt1);
     [pt2, T2] = normalise2dpts(pt2);
 
-    % A initialization
+    % Construct A
     A = zeros(2*n,9);
 
-    % Fill A with the proper values at each point
     for i=1:n
 
         xip = pt2(1,i);
@@ -32,15 +29,9 @@ function [ H ] = homography2d(pt1, pt2)
         A(2*i,7:9) = -xip*point1;  %a6
     end
 
-    % TODO. Singular Value Decomposition
-    % http://es.mathworks.com/help/matlab/ref/svd.html?s_tid=srchtitle
     [U,D,V] = svd(A);
-
-    % TODO. Take the last column of the transposed of V, that's the singular
-    % vector with the lowest singular value.
     h = V(:,end);
 
-    % TODO. Reshape h to be a 3x3 matrix.
     H = reshape(h,3,3)';
     H = T2\H*T1;
     H = H / H(3,3);
