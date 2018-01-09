@@ -270,7 +270,6 @@ end
 %% Compute the Image of the Absolute Conic
 v = [];
 for i = 1:N
-    
     h1 = H{i}(:,1);
     h2 = H{i}(:,2);
     h3 = H{i}(:,3);
@@ -278,24 +277,27 @@ for i = 1:N
     % vTij = (h1ih1j ; h1ih2j + h2ih1j ; h1ih3j + h3ih1j ; h2ih2j ; h2ih3j + h3ih2j ; h3ih3j)
     v12 = [h1(1)*h2(1), h1(1)*h2(2) + h1(2)*h2(1), h1(1)*h2(3)+h1(3)*h2(1),...
            h1(2)*h2(2), h1(2)*h2(3) + h1(3)*h2(2), h1(3)*h2(3)];
+       
     v11 = [h1(1)*h1(1), h1(1)*h1(2) + h1(2)*h1(1), h1(1)*h1(3)+h1(3)*h1(1),...
            h1(2)*h1(2), h1(2)*h1(3) + h1(3)*h1(2), h1(3)*h1(3)];
+       
     v22 = [h2(1)*h2(1), h2(1)*h2(2) + h2(2)*h2(1), h2(1)*h2(3)+h2(3)*h2(1),...
            h2(2)*h2(2), h2(2)*h2(3) + h2(3)*h2(2), h2(3)*h2(3)];
     v = [v; v12; v11 - v22];
 end
-% v = [v(1:4,:); [0 1 0 0 0 0]];
-w = null(v(1:5,:))
-% w = null(v);
-% w = w(:,1);
+
+[U, D, V] = svd(v); 
+w = V(:,end);   
+
 W = [w(1), w(2), w(3);
      w(2), w(4), w(5);
      w(3), w(5), w(6)]
 
+
 %% Recover the camera calibration.
 
 % Compute the matrix using the Cholesky factorization:
-K = chol(W,'lower');  % ToDo
+K = chol(inv(W),'upper');  % ToDo
     
 % ToDo: in the report make some comments related to the obtained internal
 %       camera parameters and also comment their relation to the image size
@@ -350,8 +352,17 @@ figure; hold;
 plot_camera(K * eye(3,4), 800, 600, 200);
 % ToDo: complete the call to the following function with the proper
 %       coordinates of the image corners in the new reference system
+
+pts = [p1 p2 p3 p4 p1];
+pts(end+1, : ) = 1;
 for i = 1:N
-%     vgg_scatter_plot( [...   ...   ...   ...   ...], 'r');
+%     Ti = eye(4);
+%     Ti(1:3,end) = t{i};
+%     Ri = [R{i}; [0 0 0]];
+%     Ri = [Ri,[0 0 0 1]'];
+%     ptsp = Ti*inv(Ri)*pts;
+    ptsp = K\P{i}*pts
+    vgg_scatter_plot( ptsp(1:3,:), 'r');
 end
 
 %% Augmented reality: Plot some 3D points on every camera.
@@ -359,12 +370,13 @@ end
 cube = [0 0 0; 1 0 0; 1 0 0; 1 1 0; 1 1 0; 0 1 0; 0 1 0; 0 0 0; 0 0 1; 1 0 1; 1 0 1; 1 1 1; 1 1 1; 0 1 1; 0 1 1; 0 0 1; 0 0 0; 1 0 0; 1 0 0; 1 0 1; 1 0 1; 0 0 1; 0 0 1; 0 0 0; 0 1 0; 1 1 0; 1 1 0; 1 1 1; 1 1 1; 0 1 1; 0 1 1; 0 1 0; 0 0 0; 0 1 0; 0 1 0; 0 1 1; 0 1 1; 0 0 1; 0 0 1; 0 0 0; 1 0 0; 1 1 0; 1 1 0; 1 1 1; 1 1 1; 1 0 1; 1 0 1; 1 0 0 ]';
 
 X = (cube - .5) * Tw / 4 + repmat([Tw / 2; Th / 2; -Tw / 8], 1, length(cube));
+X(end+1,:) = 1;
 
 for i = 1:N
     figure; colormap(gray);
     imagesc(Ig{i});
     hold on;
-    x = euclid(P{i} * homog(X));
+    x = euclid(P{i} * X);
     vgg_scatter_plot(x, 'g');
 end
 
@@ -375,9 +387,84 @@ end
 %%              DLT algorithm (folder "logos").
 %%              Interpret and comment the results.
 
+% Read images
+imargb = imread('Data/logos/logoUPF.png');
+imbrgb = imread('Data/logos/UPFbuilding.jpg');
+imcrgb = imread('Data/logos/UPFstand.jpg');
+
+ima = sum(double(imargb), 3) / 3 / 255;
+imb = sum(double(imbrgb), 3) / 3 / 255;
+imc = sum(double(imcrgb), 3) / 3 / 255;
+
+% Compute SIFT keypoints
+[points_a, desc_a] = sift(ima, 'Threshold', 0.01);
+[points_b, desc_b] = sift(imb, 'Threshold', 0.01);
+[points_c, desc_c] = sift(imc, 'Threshold', 0.01);
+
+% Match SIFT keypoints 
+matches_ab = siftmatch(desc_a, desc_b);
+matches_ac = siftmatch(desc_a, desc_c);
+
+% Compute homography
+th = 3;
+xab_a = [points_a(1:2, matches_ab(1,:)); ones(1, length(matches_ab))];
+xab_b = [points_b(1:2, matches_ab(2,:)); ones(1, length(matches_ab))];
+[Hab, inliers_ab] = ransac_homography_adaptive_loop(xab_a, xab_b, th, 1000);
+
+xac_a = [points_a(1:2, matches_ac(1,:)); ones(1, length(matches_ac))];
+xac_c = [points_c(1:2, matches_ac(2,:)); ones(1, length(matches_ac))];
+[Hac, inliers_ac] = ransac_homography_adaptive_loop(xac_a, xac_c, th, 1000); 
+
+% Compute logo corners
+[ny,nx] = size(ima);
+c1 = [0 0]';
+c2 = [nx 0]';
+c3 = [nx ny]';
+c4 = [0 ny]';
+
+corners = [c1 c2 c3 c4];
+corners(end+1,:)=1;
+
+cornersb = Hab*corners;
+cornersb = cornersb./repmat(cornersb(end,:),3,1);
+cornersc = Hac*corners;
+cornersc = cornersc./repmat(cornersc(end,:),3,1);
+
+% Plot logo corners
+figure, imshow(imbrgb)
+hold on,
+plot(cornersb(1,:),cornersb(2,:),'k*');
+
+figure, imshow(imcrgb)
+hold on,
+plot(cornersc(1,:),cornersc(2,:),'k*');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7. OPTIONAL: Replace the logo of the UPF by the master logo
 %%              in one of the previous images using the DLT algorithm.
 
+logo = imread('Data/logos/logo_master.png');
+[ny,nx,~] = size(logo);
+c1 = [0 0]';
+c2 = [nx 0]';
+c3 = [nx ny]';
+c4 = [0 ny]';
 
+corners_master = [c1 c2 c3 c4];
+corners_master(end+1,:)=1;
 
+% Image b
+Hb = homography2d(corners_master,cornersb);
+corners = [1 size(imb,2) 1 size(imb,1)];
+master_b = apply_H_v2(logo, Hb, corners);
+
+figure;
+imshow(max(master_b,imbrgb));
+
+% Image c
+Hc = homography2d(corners_master,cornersc);
+corners = [1 size(imc,2) 1 size(imc,1)];
+master_c = apply_H_v2(logo, Hc, corners);
+
+figure;
+imshow(max(master_c,imcrgb));
