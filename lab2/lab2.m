@@ -137,7 +137,7 @@ fprintf(1, 'Gold standard reproj error initial %f, final %f\n', err_initial, err
 % ToDo: compute the points xhat and xhatp which are the correspondences
 % returned by the refinement with the Gold Standard algorithm
 
-xhat = P0(10:end);
+xhat = P(10:end);
 length_xhat = size(xhat,1) / 2;
 xhat = reshape(xhat, [2, length_xhat]);
 xhat = [xhat; ones(1, length_xhat)];
@@ -183,7 +183,7 @@ fprintf(1, 'Gold standard reproj error initial %f, final %f\n', err_initial, err
 
 % ToDo: compute the points xhat and xhatp which are the correspondences
 % returned by the refinement with the Gold Standard algorithm
-xhat = P0(10:end);
+xhat = P(10:end);
 length_xhat = size(xhat,1) / 2;
 xhat = reshape(xhat, [2, length_xhat]);
 xhat = [xhat; ones(1, length_xhat)];
@@ -222,8 +222,8 @@ T     = imread('Data/calib/template.jpg');
 I{1}  = imread('Data/calib/graffiti1.tif');
 I{2}  = imread('Data/calib/graffiti2.tif');
 I{3}  = imread('Data/calib/graffiti3.tif');
-%I{4}  = imread('Data/calib/graffiti4.tif');
-%I{5}  = imread('Data/calib/graffiti5.tif');
+% I{4}  = imread('Data/calib/graffiti4.tif');
+% I{5}  = imread('Data/calib/graffiti5.tif');
 Tg = sum(double(T), 3) / 3 / 255;
 Ig{1} = sum(double(I{1}), 3) / 3 / 255;
 Ig{2} = sum(double(I{2}), 3) / 3 / 255;
@@ -258,22 +258,44 @@ for i = 1:N
 
     H{i} = 0;
     [H{i}, inliers] =  ransac_homography_adaptive_loop(x1, x2, 3, 1000);
-
+%     H{i} = inv(H{i});
     % Plot inliers.
     figure;
     plotmatches(Tg, Ig{i}, pointsT(1:2,:), points{i}(1:2,:), matches(:, inliers));
 
     % Play with the homography
-    vgg_gui_H(T, I{i}, H{i});
+%     vgg_gui_H(T, I{i}, H{i});
 end
 
 %% Compute the Image of the Absolute Conic
+v = [];
+for i = 1:N
+    
+    h1 = H{i}(:,1);
+    h2 = H{i}(:,2);
+    h3 = H{i}(:,3);
+    
+    % vTij = (h1ih1j ; h1ih2j + h2ih1j ; h1ih3j + h3ih1j ; h2ih2j ; h2ih3j + h3ih2j ; h3ih3j)
+    v12 = [h1(1)*h2(1), h1(1)*h2(2) + h1(2)*h2(1), h1(1)*h2(3)+h1(3)*h2(1),...
+           h1(2)*h2(2), h1(2)*h2(3) + h1(3)*h2(2), h1(3)*h2(3)];
+    v11 = [h1(1)*h1(1), h1(1)*h1(2) + h1(2)*h1(1), h1(1)*h1(3)+h1(3)*h1(1),...
+           h1(2)*h1(2), h1(2)*h1(3) + h1(3)*h1(2), h1(3)*h1(3)];
+    v22 = [h2(1)*h2(1), h2(1)*h2(2) + h2(2)*h2(1), h2(1)*h2(3)+h2(3)*h2(1),...
+           h2(2)*h2(2), h2(2)*h2(3) + h2(3)*h2(2), h2(3)*h2(3)];
+    v = [v; v12; v11 - v22];
+end
+% v = [v(1:4,:); [0 1 0 0 0 0]];
+w = null(v(1:5,:))
+% w = null(v);
+% w = w(:,1);
+W = [w(1), w(2), w(3);
+     w(2), w(4), w(5);
+     w(3), w(5), w(6)]
 
-%w = ... % ToDo
- 
 %% Recover the camera calibration.
 
-%K = ... % ToDo
+% Compute the matrix using the Cholesky factorization:
+K = chol(W,'lower');  % ToDo
     
 % ToDo: in the report make some comments related to the obtained internal
 %       camera parameters and also comment their relation to the image size
@@ -283,11 +305,15 @@ R = cell(N,1);
 t = cell(N,1);
 P = cell(N,1);
 figure;hold;
-for i = 1:N
+for i = 1:N    
+    h1 = H{i}(:,1);
+    h2 = H{i}(:,2);
+    h3 = H{i}(:,3);
+    
     % ToDo: compute r1, r2, and t{i}
-    %r1 = ...
-    %r2 = ...
-    %t{i} = ...
+    r1 = K\h1;
+    r2 = K\h2;
+    t{i} = K\h3;
     
     % Solve the scale ambiguity by forcing r1 and r2 to be unit vectors.
     s = sqrt(norm(r1) * norm(r2)) * sign(t{i}(3));
@@ -297,7 +323,7 @@ for i = 1:N
     R{i} = [r1, r2, cross(r1,r2)];
     
     % Ensure R is a rotation matrix
-    [U S V] = svd(R{i});
+    [U, S, V] = svd(R{i});
     R{i} = U * eye(3) * V';
    
     P{i} = K * [R{i} t{i}];
