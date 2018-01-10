@@ -12,24 +12,24 @@ imargb = imread('Data/llanes/llanes_a.jpg');
 imbrgb = imread('Data/llanes/llanes_b.jpg');
 imcrgb = imread('Data/llanes/llanes_c.jpg');
 
-% imargb = imread('Data/castle_int/0016_s.png');
-% imbrgb = imread('Data/castle_int/0015_s.png');
-% imcrgb = imread('Data/castle_int/0014_s.png');
+%imargb = imread('Data/castle_int/0016_s.png');
+%imbrgb = imread('Data/castle_int/0015_s.png');
+%imcrgb = imread('Data/castle_int/0014_s.png');
 
-% imargb = imread('Data/aerial/site13/frame00000.png');
-% imbrgb = imread('Data/aerial/site13/frame00002.png');
-% imcrgb = imread('Data/aerial/site13/frame00003.png');
+%imargb = imread('Data/aerial/site13/frame00000.png');
+%imbrgb = imread('Data/aerial/site13/frame00002.png');
+%imcrgb = imread('Data/aerial/site13/frame00003.png');
 
 ima = sum(double(imargb), 3) / 3 / 255;
 imb = sum(double(imbrgb), 3) / 3 / 255;
 imc = sum(double(imcrgb), 3) / 3 / 255;
 
-% imargb = double(imread('Data/aerial/site22/frame_00001.tif'));
-% imbrgb = double(imread('Data/aerial/site22/frame_00018.tif'));
-% imcrgb = double(imread('Data/aerial/site22/frame_00030.tif'));
-% ima = imargb;
-% imb = imbrgb;
-% imc = imcrgb;
+ %imargb = double(imread('Data/aerial/site22/frame_00001.tif'));
+ %imbrgb = double(imread('Data/aerial/site22/frame_00018.tif'));
+ %imcrgb = double(imread('Data/aerial/site22/frame_00030.tif'));
+ %ima = imargb;
+ %imb = imbrgb;
+ %imc = imcrgb;
 
 %% Compute SIFT keypoints
 [points_a, desc_a] = sift(ima, 'Threshold', 0.01);
@@ -221,9 +221,9 @@ clear all;
 T     = imread('Data/calib/template.jpg');
 I{1}  = imread('Data/calib/graffiti1.tif');
 I{2}  = imread('Data/calib/graffiti2.tif');
-I{3}  = imread('Data/calib/graffiti3.tif');
-% I{4}  = imread('Data/calib/graffiti4.tif');
-% I{5}  = imread('Data/calib/graffiti5.tif');
+I{3}  = imread('Data/calib/graffiti4.tif');
+%I{4}  = imread('Data/calib/graffiti4.tif');
+%I{5}  = imread('Data/calib/graffiti3.tif');
 Tg = sum(double(T), 3) / 3 / 255;
 Ig{1} = sum(double(I{1}), 3) / 3 / 255;
 Ig{2} = sum(double(I{2}), 3) / 3 / 255;
