@@ -18,19 +18,24 @@ X = [rand(3,n); ones(1,n)] + [zeros(2,n); 3 * ones(1,n); zeros(1,n)];
 x1_test = P1 * X;
 x2_test = P2 * X;
 
+% x1_test = x1_test./repmat(x1_test(3,:),3,1);
+% x2_test = x2_test./repmat(x2_test(3,:),3,1);
+
 % Estimated fundamental matrix
 % ToDo: create the following function that estimates F using the normalised 8 point algorithm
 F_es = fundamental_matrix(x1_test, x2_test);
 
 % Real fundamental matrix
-[U,D,V] = svd(F_es);
-D(3,3)=0;
-F_gt = U*D*V; % ToDo: write the expression of the real fundamental matrix for P1 and P2
+T = [ 0  -t(3) t(2);
+     t(3)  0  -t(1);
+    -t(2) t(1)  0];
+E = T*R;
+
+F_gt = E; % ToDo: write the expression of the real fundamental matrix for P1 and P2
 
 % Evaluation: these two matrices should be very similar
 F_gt / norm(F_gt)
 F_es / norm(F_es)
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2. Robustly fit fundamental matrix
@@ -45,7 +50,6 @@ im2 = sum(double(im2rgb), 3) / 3 / 255;
 figure;
 subplot(1,2,1); imshow(im1rgb); axis image; title('Image 1');
 subplot(1,2,2); imshow(im2rgb); axis image; title('Image 2');
-
 
 %% Compute SIFT keypoints
 
@@ -63,8 +67,19 @@ plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches, 'Stacking', 'v'
 p1 = [points_1(1:2, matches(1,:)); ones(1, length(matches))];
 p2 = [points_2(1:2, matches(2,:)); ones(1, length(matches))];
 
-% ToDo: create this function (you can use as a basis 'ransac_homography_adaptive_loop.m')
-[F, inliers] = ransac_fundamental_matrix(p1, p2, 2.0); 
+
+%%
+figure;
+plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches(:,[1:7,9]), 'Stacking', 'v');
+
+F = fundamental_matrix(p1(:,matches(:,[1:7,9])), p2(:,matches(:,[1:7,9]))); 
+vgg_gui_F(im1rgb, im2rgb, F');
+
+
+%% ToDo: create this function (you can use as a basis 'ransac_homography_adaptive_loop.m')
+% [F, inliers] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
+F = fundamental_matrix(p1, p2); 
+inliers = 1:size(matches,2);
 
 % show inliers
 figure;

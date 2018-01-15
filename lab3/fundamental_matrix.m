@@ -11,29 +11,24 @@ function [ F ] = fundamental_matrix(pt1, pt2)
     [pt1, T1] = normalise2dpts(pt1);
     [pt2, T2] = normalise2dpts(pt2);
 
-    % Construct A
-%     W = zeros(n,9);
-        
-    W = [];
+    % Construct W
+    u1 = pt1(1,:)';
+    u2 = pt2(1,:)';
+    v1 = pt1(2,:)';
+    v2 = pt2(2,:)';
+    
+    W = [u1.*u2, v1.*u2, u2, u1.*v2, v1.*v2, v2, u1, v1, ones(n,1)];
 
-    for i=1:n
-        u =pt1(1,i);
-        v =pt1(2,i);
-        
-        up =pt2(2,i);
-        vp =pt2(2,i);
-        
-%         w = [uu' vu' u' uv' vv' v' u v 1]
-        w = [u*up v*up up u*vp v*vp vp u v 1];
-        W = [W;w];
-    end
-
-    [U,D,V] = svd(W);
+    [~,~,V] = svd(W);
     f = V(:,end);
-
     F = reshape(f,3,3)';
-    F = T2\F*T1;
-    F = F / F(3,3);
-
+    
+    % Change fo rank (from rank 3 to rank 2)
+    [U,D,V] = svd(F);
+    D(3,3)=0;    
+    F = U*D*V';
+    
+    % De-normalize
+    F = T2'*F*T1;
 end
 
