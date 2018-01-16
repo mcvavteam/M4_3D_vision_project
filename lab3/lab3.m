@@ -249,8 +249,77 @@ plot(pi4(1)/pi4(3), pi4(2)/pi4(3), 'g*');
 % 4.1 Take a set of images of a moving scene from different viewpoints at 
 %     different time instants. At least two images have to be taken from
 %     roughly the same location by the same camera.
-%
+
+clear all;
+
+% Read images
+im1rgb = imresize(imread('Data/IMG_0174.JPG'),[720 NaN]);
+im2rgb = imresize(imread('Data/IMG_0175.JPG'),[720 NaN]);
+im3rgb = imresize(imread('Data/IMG_0176.JPG'),[720 NaN]);
+im4rgb = imresize(imread('Data/IMG_0177.JPG'),[720 NaN]);
+
+im1 = sum(double(im1rgb), 3) / 3 / 255;
+im2 = sum(double(im2rgb), 3) / 3 / 255;
+im3 = sum(double(im3rgb), 3) / 3 / 255;
+im4 = sum(double(im4rgb), 3) / 3 / 255;
+
+% show images
+figure;
+subplot(2,2,1); imshow(im1rgb); axis image; title('Image 1');
+subplot(2,2,2); imshow(im2rgb); axis image; title('Image 2');
+subplot(2,2,3); imshow(im3rgb); axis image; title('Image 3');
+subplot(2,2,4); imshow(im4rgb); axis image; title('Image 4');
+
+% Compute SIFT keypoints
+[points_1, desc_1] = sift(im1, 'Threshold', 0.015); % Do not change this threshold!
+[points_2, desc_2] = sift(im2, 'Threshold', 0.015);
+[points_3, desc_3] = sift(im3, 'Threshold', 0.015);
+[points_4, desc_4] = sift(im4, 'Threshold', 0.015);
+
+% Plot SIFT keypoints on im1
+% figure; imshow(im1rgb); hold on; plot(points_1(1,:),points_1(2,:),'c*');
+
 % 4.2 Implement the first part (until line 16) of the Algorithm 1 of the 
 %     Photo-sequencing paper with a selection of the detected dynamic
 %     features. You may reuse the code generated for the previous question.
 %
+
+%% Step 1: Match im1 and im2 (the similar images)
+matches_12 = siftmatch(desc_1, desc_2);
+figure; plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches_12, 'Stacking', 'v');
+
+%% Step 2: Classify the keypoints between dynamic and static
+threshold = 60;
+% out_threshold = 400;
+
+p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
+p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
+distances = sqrt(sum((p1-p2).^2,1));
+
+static_I1 = matches_12(1,distances<=threshold );%& distances<out_threshold);
+dynamic_I1 = matches_12(1,distances>threshold );%& distances<out_threshold);
+static_I2 = matches_12(2,distances<=threshold );%& distances<out_threshold);
+dynamic_I2 = matches_12(2,distances>threshold );%& distances<out_threshold);
+
+
+figure; imshow(im1rgb);
+hold on; plot(points_1(1,static_I1),points_1(2,static_I1),'r*');
+plot(points_1(1,dynamic_I1),points_1(2,dynamic_I1),'b*');
+plot(points_2(1,dynamic_I2),points_2(2,dynamic_I2),'g*');
+
+%% Step 4: Match im1 with the other images
+matches_13 = siftmatch(desc_1, desc_3);
+matches_14 = siftmatch(desc_1, desc_4);
+
+%% Step 5: Get the dynamic keypoints
+
+%% Step 6: Compute fundamental matrices
+p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
+p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
+[F_12, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
+p1 = [points_1(1:2, matches_13(1,:)); ones(1, length(matches_13))];
+p2 = [points_3(1:2, matches_13(2,:)); ones(1, length(matches_13))];
+[F_13, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000);
+p1 = [points_1(1:2, matches_14(1,:)); ones(1, length(matches_14))];
+p2 = [points_4(1:2, matches_14(2,:)); ones(1, length(matches_14))];
+[F_14, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000);
