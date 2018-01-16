@@ -4,6 +4,7 @@
 
 addpath('sift'); % ToDo: change 'sift' to the correct path where you have the sift functions
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 1. Compute the fundamental matrix
 
@@ -288,38 +289,60 @@ subplot(2,2,4); imshow(im4rgb); axis image; title('Image 4');
 matches_12 = siftmatch(desc_1, desc_2);
 figure; plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches_12, 'Stacking', 'v');
 
+p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
+p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
+
+% [F, inliers] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
+
+% figure; plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches_12(:,inliers), 'Stacking', 'v');
+
 %% Step 2: Classify the keypoints between dynamic and static
 threshold = 60;
 % out_threshold = 400;
-
 p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
 p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
+
+% p1 = [points_1(1:2, matches_12(1,inliers)); ones(1, length(matches_12(:,inliers)))];
+% p2 = [points_2(1:2, matches_12(2,inliers)); ones(1, length(matches_12(:,inliers)))];
 distances = sqrt(sum((p1-p2).^2,1));
 
-static_I1 = matches_12(1,distances<=threshold );%& distances<out_threshold);
-dynamic_I1 = matches_12(1,distances>threshold );%& distances<out_threshold);
-static_I2 = matches_12(2,distances<=threshold );%& distances<out_threshold);
-dynamic_I2 = matches_12(2,distances>threshold );%& distances<out_threshold);
-
+static_12 = matches_12(:,distances<=threshold );%& distances<out_threshold);
+dynamic_12 = matches_12(:,distances>threshold );%& distances<out_threshold);
 
 figure; imshow(im1rgb);
-hold on; plot(points_1(1,static_I1),points_1(2,static_I1),'r*');
-plot(points_1(1,dynamic_I1),points_1(2,dynamic_I1),'b*');
-plot(points_2(1,dynamic_I2),points_2(2,dynamic_I2),'g*');
+hold on; plot(points_1(1,static_12(1,:)),points_1(2,static_12(1,:)),'r*');
+plot(points_1(1,dynamic_12(1,:)),points_1(2,dynamic_12(1,:)),'b*');
+plot(points_2(1,dynamic_I2(2,:)),points_2(2,dynamic_I2(2,:)),'g*');
 
 %% Step 4: Match im1 with the other images
 matches_13 = siftmatch(desc_1, desc_3);
 matches_14 = siftmatch(desc_1, desc_4);
 
 %% Step 5: Get the dynamic keypoints
+dynamic_13 = matches_13(:,ismember(matches_13(1,:),dynamic_12(1,:)));
+dynamic_14 = matches_14(:,ismember(matches_14(1,:),dynamic_12(1,:)));
+
+static_13 = matches_13(:,ismember(matches_13(1,:),static_12(1,:)));
+static_14 = matches_14(:,ismember(matches_14(1,:),static_12(1,:)));
 
 %% Step 6: Compute fundamental matrices
-p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
-p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
+p1 = [points_1(1:2, static_I2(1,:)); ones(1, length(static_I2(1,:)))];
+p2 = [points_2(1:2, static_I2(2,:)); ones(1, length(static_I2(1,:)))];
 [F_12, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
-p1 = [points_1(1:2, matches_13(1,:)); ones(1, length(matches_13))];
-p2 = [points_3(1:2, matches_13(2,:)); ones(1, length(matches_13))];
+p1 = [points_1(1:2, static_13(1,:)); ones(1, length(static_13(1,:)))];
+p2 = [points_3(1:2, static_13(2,:)); ones(1, length(static_13(1,:)))];
 [F_13, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000);
-p1 = [points_1(1:2, matches_14(1,:)); ones(1, length(matches_14))];
-p2 = [points_4(1:2, matches_14(2,:)); ones(1, length(matches_14))];
+p1 = [points_1(1:2, static_14(1,:)); ones(1, length(static_14(1,:)))];
+p2 = [points_4(1:2, static_14(2,:)); ones(1, length(static_14(1,:)))];
 [F_14, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000);
+
+%% Step 7: 
+
+p1 = [points_1(1:2, dynamic_12(1,:)); ones(1, length(dynamic_12(1,:)))];
+p2 = [points_2(1:2, dynamic_12(2,:)); ones(1, length(dynamic_12(1,:)))];
+directions = cross(p1,p2);
+
+for i=1:size(dynamic_13,2)
+    
+end
+
