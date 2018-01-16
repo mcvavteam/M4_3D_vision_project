@@ -1,4 +1,4 @@
-function [H, idx_inliers] = ransac_fundamental_matrix(x1, x2, th, max_it)
+function [F, idx_inliers] = ransac_fundamental_matrix(x1, x2, th, max_it)
 
 [Ncoords, Npoints] = size(x1);
 
@@ -9,9 +9,9 @@ best_inliers = [];
 p = 0.999; 
 while it < max_it
     
-    points = randomsample(Npoints, 4);
-    H = fundamental_matrix(x1(:,points), x2(:,points));
-    inliers = compute_inliers(H, x1, x2, th);
+    points = randomsample(Npoints, 8);
+    F = fundamental_matrix(x1(:,points), x2(:,points));
+    inliers = compute_inliers(F, x1, x2, th);
     
     % test if it is the best model so far
     if length(inliers) > length(best_inliers)
@@ -29,38 +29,32 @@ while it < max_it
     it = it + 1;
 end
 
-% compute H from all the inliers
-H = homography2d(x1(:,best_inliers), x2(:,best_inliers));
+% compute F for the best inlier
+F = fundamental_matrix(x1(:,best_inliers), x2(:,best_inliers));
 idx_inliers = best_inliers;
 
-
-function idx_inliers = compute_inliers(H, x1, x2, th)
+% Inliers are obtained with a threshold on the first order approx.
+% of the geometi error (Sampson distance)
+function idx_inliers = compute_inliers(F, x1, x2, th)
     % Check that H is invertible
-    if abs(log(cond(H))) > 15
-        idx_inliers = [];
-        return
+    num_p = size(x1, 2);
+       
+    p2Fp1 = zeros(1, num_p);
+    
+    for i = 1: num_p
+        p2Fp1(i) = x2(:,i)' * F * x1(:,i);
     end
-    %FOR HOMOGRAPHY 
-%     % transformed points (in both directions)
-%     Hx1 = H * x1;
-%     Hix2 = inv(H) * x2;
-%     
-%     % normalise homogeneous coordinates (third coordinate to 1)
-%     x1 = normalise(x1);
-%     x2 = normalise(x2);     
-%     Hx1 = normalise(Hx1);
-%     Hix2 = normalise(Hix2); 
-%     
-%     % compute the symmetric geometric error
-%     d2 = sum((x1 - Hix2).^2) + sum((x2 - Hx1).^2);
-
-% DO IT FOR FUNDAMENTAL MATRIX
-    d2= 0;
-    idx_inliers = find(d2 < th.^2);
+    
+    Fp1 = F*x1;
+    Fp2 = F'*x2;
+   
+    % Computing Sampson Distance (Error)
+    d = p2Fp1.^2 ./ (Fp1(1,:).^2 + Fp1(2,:).^2 + Fp2(1,:).^2 + Fp2(2,:).^2); 
+    idx_inliers = find(d < th.^2);
 
 
-function xn = normalise(x)    
-    xn = x ./ repmat(x(end,:), size(x,1), 1);
+% function xn = normalise(x)    
+%     xn = x ./ repmat(x(end,:), size(x,1), 1);
 
     
 function item = randomsample(npts, n)

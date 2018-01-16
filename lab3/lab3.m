@@ -18,9 +18,6 @@ X = [rand(3,n); ones(1,n)] + [zeros(2,n); 3 * ones(1,n); zeros(1,n)];
 x1_test = P1 * X;
 x2_test = P2 * X;
 
-% x1_test = x1_test./repmat(x1_test(3,:),3,1);
-% x2_test = x2_test./repmat(x2_test(3,:),3,1);
-
 % Estimated fundamental matrix
 % ToDo: create the following function that estimates F using the normalised 8 point algorithm
 F_es = fundamental_matrix(x1_test, x2_test);
@@ -29,9 +26,8 @@ F_es = fundamental_matrix(x1_test, x2_test);
 T = [ 0  -t(3) t(2);
      t(3)  0  -t(1);
     -t(2) t(1)  0];
-E = T*R;
 
-F_gt = E; % ToDo: write the expression of the real fundamental matrix for P1 and P2
+F_gt = T*R; % ToDo: write the expression of the real fundamental matrix for P1 and P2
 
 % Evaluation: these two matrices should be very similar
 F_gt / norm(F_gt)
@@ -77,9 +73,9 @@ vgg_gui_F(im1rgb, im2rgb, F');
 
 
 %% ToDo: create this function (you can use as a basis 'ransac_homography_adaptive_loop.m')
-% [F, inliers] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
-F = fundamental_matrix(p1, p2); 
-inliers = 1:size(matches,2);
+[F, inliers] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
+% F = fundamental_matrix(p1, p2); 
+% inliers = 1:size(matches,2);
 
 % show inliers
 figure;
@@ -91,13 +87,17 @@ vgg_gui_F(im1rgb, im2rgb, F');
 
 %% Plot some epipolar lines
 
-l2 = ... % epipolar lines in image 2 % ToDo
-l1 = ... % epipolar lines in image 1 % ToDo
+l2 = F*p1 % epipolar lines in image 2 % ToDo
+l1 = F'*p2 % epipolar lines in image 1 % ToDo
 
 % choose three random indices
-m1 = inliers(10);
-m2 = inliers(20);
-m3 = inliers(30);
+inliersSz = numel(inliers);
+m1 = inliers(unidrnd(inliersSz));
+m2 = inliers(unidrnd(inliersSz));
+m3 = inliers(unidrnd(inliersSz));
+% m1 = inliers(10);
+% m2 = inliers(20);
+% m3 = inliers(30);
 
 % image 1 (plot the three points and their corresponding epipolar lines)
 figure;
