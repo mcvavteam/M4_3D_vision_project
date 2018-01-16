@@ -226,12 +226,12 @@ plot(pi2(1)/pi2(3), pi2(2)/pi2(3), 'c*');
 % ToDo: write the homogeneous coordinates of the corresponding point of idx_car_I1 in image 3
 point3 = [points_3(1:2,idx_car_I3); 1];
 % ToDo: compute the epipolar line of point3 in the reference image
-l3 = F_13' * point3;
+epipolar3 = F_13' * point3;
 % plot the epipolar line
-plot(t, -(l3(1)*t + l3(3)) / l3(2), 'b');
+plot(t, -(epipolar3(1)*t + epipolar3(3)) / epipolar3(2), 'b');
 % ToDo: compute the projection of point idx_car_I3 in the reference image
-pi3 = cross(l1,l3);
-plot(pi3(1)/pi3(3), pi3(2)/pi3(3), 'b*');
+point3_im1 = cross(l1,epipolar3);
+plot(point3_im1(1)/point3_im1(3), point3_im1(2)/point3_im1(3), 'b*');
 
 % ToDo: write the homogeneous coordinates of the corresponding point of idx_car_I1 in image 4
 point4 = [points_4(1:2,idx_car_I4); 1];
@@ -240,8 +240,8 @@ l4 = F_14' * point4;
 % plot the epipolar line
 plot(t, -(l4(1)*t + l4(3)) / l4(2), 'g');
 % ToDo: compute the projection of point idx_car_I4 in the reference image
-pi4 = cross(l1,l4);
-plot(pi4(1)/pi4(3), pi4(2)/pi4(3), 'g*');
+point4_im1 = cross(l1,l4);
+plot(point4_im1(1)/point4_im1(3), point4_im1(2)/point4_im1(3), 'g*');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -312,7 +312,7 @@ dynamic_12 = matches_12(:,distances>threshold );%& distances<out_threshold);
 figure; imshow(im1rgb);
 hold on; plot(points_1(1,static_12(1,:)),points_1(2,static_12(1,:)),'r*');
 plot(points_1(1,dynamic_12(1,:)),points_1(2,dynamic_12(1,:)),'b*');
-plot(points_2(1,dynamic_I2(2,:)),points_2(2,dynamic_I2(2,:)),'g*');
+plot(points_2(1,dynamic_12(2,:)),points_2(2,dynamic_12(2,:)),'g*');
 
 %% Step 4: Match im1 with the other images
 matches_13 = siftmatch(desc_1, desc_3);
@@ -326,8 +326,8 @@ static_13 = matches_13(:,ismember(matches_13(1,:),static_12(1,:)));
 static_14 = matches_14(:,ismember(matches_14(1,:),static_12(1,:)));
 
 %% Step 6: Compute fundamental matrices
-p1 = [points_1(1:2, static_I2(1,:)); ones(1, length(static_I2(1,:)))];
-p2 = [points_2(1:2, static_I2(2,:)); ones(1, length(static_I2(1,:)))];
+p1 = [points_1(1:2, static_12(1,:)); ones(1, length(static_12(1,:)))];
+p2 = [points_2(1:2, static_12(2,:)); ones(1, length(static_12(1,:)))];
 [F_12, ~] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
 p1 = [points_1(1:2, static_13(1,:)); ones(1, length(static_13(1,:)))];
 p2 = [points_3(1:2, static_13(2,:)); ones(1, length(static_13(1,:)))];
@@ -342,7 +342,34 @@ p1 = [points_1(1:2, dynamic_12(1,:)); ones(1, length(dynamic_12(1,:)))];
 p2 = [points_2(1:2, dynamic_12(2,:)); ones(1, length(dynamic_12(1,:)))];
 directions = cross(p1,p2);
 
-for i=1:size(dynamic_13,2)
+alpha3 = [];
+alpha4 = [];
+for i=1:size(dynamic_12,2)
+    d_i = dynamic_12(1,i);
+    point1 = [points_1(1:2,d_i); 1];
+    point2 = [points_2(1:2,dynamic_12(2,i)); 1];
+    ltrajectory = directions(:,i);
     
+    % im3
+    if max(dynamic_13(1,:)==d_i)
+        point3 = [points_3(1:2,dynamic_13(2,dynamic_13(1,:)==d_i)); 1];
+        
+        epipolar3 = F_13' * point3;
+        
+        point3_im1 = cross(ltrajectory,epipolar3);
+        
+        alpha3 = [alpha3; sum((point3_im1-point1).^2)];
+    end
+    
+    % im4
+    if max(dynamic_14(1,:)==d_i)
+        point4 = [points_4(1:2,dynamic_14(2,dynamic_14(1,:)==d_i)); 1];
+        
+        epipolar4 = F_14' * point4;
+        
+        point4_im1 = cross(ltrajectory,epipolar4);
+        
+        alpha4 = [alpha4; sum((point4_im1-point1).^2)];
+    end
 end
 
