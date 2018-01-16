@@ -297,7 +297,7 @@ p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
 % figure; plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches_12(:,inliers), 'Stacking', 'v');
 
 %% Step 2: Classify the keypoints between dynamic and static
-threshold = 60;
+threshold = 60; % thresholdUSB = 30
 % out_threshold = 400;
 p1 = [points_1(1:2, matches_12(1,:)); ones(1, length(matches_12))];
 p2 = [points_2(1:2, matches_12(2,:)); ones(1, length(matches_12))];
@@ -345,11 +345,18 @@ directions = cross(p1,p2);
 alpha3 = [];
 alpha4 = [];
 for i=1:size(dynamic_12,2)
+%     f=figure; imshow(im1rgb); hold on;
+    
     d_i = dynamic_12(1,i);
     point1 = [points_1(1:2,d_i); 1];
     point2 = [points_2(1:2,dynamic_12(2,i)); 1];
     ltrajectory = directions(:,i);
     
+%     t=1:0.1:1000;
+%     plot(t, -(ltrajectory(1)*t + ltrajectory(3)) / ltrajectory(2), 'y');
+%     plot(point1(1), point1(2), 'y*');
+%     plot(point2(1), point2(2), 'y*');
+
     % im3
     if max(dynamic_13(1,:)==d_i)
         point3 = [points_3(1:2,dynamic_13(2,dynamic_13(1,:)==d_i)); 1];
@@ -357,8 +364,12 @@ for i=1:size(dynamic_12,2)
         epipolar3 = F_13' * point3;
         
         point3_im1 = cross(ltrajectory,epipolar3);
+        point3_im1 = point3_im1 ./ point3_im1(3);
         
         alpha3 = [alpha3; sum((point3_im1-point1).^2)];
+        
+%         plot(t, -(epipolar3(1)*t + epipolar3(3)) / epipolar3(2), 'c');
+%         plot(point3_im1(1), point3_im1(2), 'c*');
     end
     
     % im4
@@ -368,8 +379,19 @@ for i=1:size(dynamic_12,2)
         epipolar4 = F_14' * point4;
         
         point4_im1 = cross(ltrajectory,epipolar4);
+        point4_im1 = point4_im1 ./ point4_im1(3);
+
         
         alpha4 = [alpha4; sum((point4_im1-point1).^2)];
+        
+%         plot(t, -(epipolar4(1)*t + epipolar4(3)) / epipolar4(2), 'b');
+%         plot(point4_im1(1), point4_im1(2), 'b*');
     end
+%     pause; close(f);
 end
 
+if median(alpha3)<median(alpha4)
+    disp('Order: image1, image2, image3, image4');
+else
+    disp('Order: image1, image2, image4, image3');
+end
