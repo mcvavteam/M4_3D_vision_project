@@ -242,11 +242,11 @@ plot(point4_im1(1)/point4_im1(3), point4_im1(2)/point4_im1(3), 'g*');
 
 clear all;
 
-% Read images
+% Read images & Reading unsorted images
 im1rgb = imresize(imread('Data/IMG_0174.JPG'),[720 NaN]);
 im2rgb = imresize(imread('Data/IMG_0175.JPG'),[720 NaN]);
-im3rgb = imresize(imread('Data/IMG_0176.JPG'),[720 NaN]);
-im4rgb = imresize(imread('Data/IMG_0177.JPG'),[720 NaN]);
+im3rgb = imresize(imread('Data/IMG_0177.JPG'),[720 NaN]);
+im4rgb = imresize(imread('Data/IMG_0176.JPG'),[720 NaN]);
 
 im1 = sum(double(im1rgb), 3) / 3 / 255;
 im2 = sum(double(im2rgb), 3) / 3 / 255;
