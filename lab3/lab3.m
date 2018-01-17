@@ -4,7 +4,6 @@
 
 addpath('sift'); % ToDo: change 'sift' to the correct path where you have the sift functions
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 1. Compute the fundamental matrix
 
@@ -64,15 +63,6 @@ plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches, 'Stacking', 'v'
 p1 = [points_1(1:2, matches(1,:)); ones(1, length(matches))];
 p2 = [points_2(1:2, matches(2,:)); ones(1, length(matches))];
 
-
-%%
-figure;
-plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches(:,[1:7,9]), 'Stacking', 'v');
-
-F_12 = fundamental_matrix(p1(:,matches(:,[1:7,9])), p2(:,matches(:,[1:7,9]))); 
-vgg_gui_F(im1rgb, im2rgb, F_12');
-
-
 %% ToDo: create this function (you can use as a basis 'ransac_homography_adaptive_loop.m')
 [F_12, inliers] = ransac_fundamental_matrix(p1, p2, 2.0, 1000); 
 % F = fundamental_matrix(p1, p2); 
@@ -84,7 +74,6 @@ plotmatches(im1, im2, points_1(1:2,:), points_2(1:2,:), matches(:,inliers), 'Sta
 title('Inliers');
 
 vgg_gui_F(im1rgb, im2rgb, F_12');
-
 
 %% Plot some epipolar lines
 
@@ -395,3 +384,4 @@ if median(alpha3)<median(alpha4)
 else
     disp('Order: image1, image2, image4, image3');
 end
+%%
