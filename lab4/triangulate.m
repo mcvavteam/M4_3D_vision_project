@@ -24,5 +24,6 @@ A = [x1(1) * P1(3,:) - P1(1,:);
 % Compute X
 [~,~,V] = svd(A);
 X = V(:,end);
+X = X./X(4);
 end
 
