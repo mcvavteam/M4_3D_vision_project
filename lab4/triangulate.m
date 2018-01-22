@@ -6,6 +6,7 @@ function [ X ] = triangulate(x1, x2, P1, P2, imsize)
 %   - P1 and P2 are the two camera matrices
 %   - imsize is a two-dimensional vector with the image size
 
+
 % Normalization
 H = [2/imsize(1) 0 -1;
      0 2/imsize(2) -1;

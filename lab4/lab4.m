@@ -19,8 +19,6 @@ addpath('sift'); % ToDo: change 'sift' to the correct path where you have the si
 %% Test the triangulate function
 % Use this code to validate that the function triangulate works properly
 
-% DUDA: normalizar la salida de triangulate? X = X./X(4)
-
 P1 = eye(3,4);
 c = cosd(15); s = sind(15);
 R = [c -s 0; s c 0; 0 0 1];
@@ -87,39 +85,35 @@ x2 = points{2}(:, inlier_matches(2, :));
 
 %% Compute candidate camera matrices.
 
-% FALTA COMPROBAR
-
 % Camera calibration matrix
 K = [2362.12 0 1520.69; 0 2366.12 1006.81; 0 0 1];
 scale = 0.3;
 H = [scale 0 0; 0 scale 0; 0 0 1];
 K = H * K;
 
-
 % ToDo: Compute the Essential matrix from the Fundamental matrix
 E = K' * F * K;
 
-
 % ToDo: write the camera projection matrix for the first camera
-P1 = K * [eye(3) zeros(3,1)];
+P1 = K * eye(3,4);
 
 % ToDo: write the four possible matrices for the second camera
 [U,D,V] = svd(E);
 W = [0 -1 0;
      1  0 0;
      0  0 1];
-R1 = U*W*V';
-R2 = U*W'*V';
+R1 = U * W * V';
+R2 = U * W' * V';
 if det(R1) < 0, R1=-R1; end
 if det(R2) < 0, R2=-R2; end
 t1 = U(:,3);
 t2 = - U(:,3);
 
 Pc2 = {};
-Pc2{1} = [R1 t1];
-Pc2{2} = [R1 t2];
-Pc2{3} = [R2 t1];
-Pc2{4} = [R2 t2];
+Pc2{1} = K * [R1 t1];
+Pc2{2} = K * [R1 t2];
+Pc2{3} = K * [R2 t1];
+Pc2{4} = K * [R2 t2];
 
 % HINT: You may get improper rotations; in that case you need to change
 %       their sign.
