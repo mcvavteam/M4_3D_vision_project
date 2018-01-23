@@ -18,11 +18,20 @@ for i=1:h-wsize+1
         
         % Compute the matching cost
         if upper(cost_function)=='SSD'
-            costs = zeros(w-wsize+1,1);
-            for k=1:w-wsize+1
-                comp_window = Ir(i:i+wsize-1,k:k+wsize-1);
-                costs(k) = sum(sum((reference_window-comp_window).^2));
+%             costs = zeros(w-wsize+1,1);
+            costs = zeros(wsize*wsize,w-wsize+1);
+            costs_idx=1;
+            for k=1:wsize
+                for l=1:wsize
+                    costs(costs_idx,:) = Ir(i+k-1,l:w-wsize+l)-reference_window(k,l);
+                    costs_idx=costs_idx+1;
+                end
             end
+            costs = sum(costs.^2)/wsize^2;
+%             for k=1:w-wsize+1
+%                 comp_window = Ir(i:i+wsize-1,k:k+wsize-1);
+%                 costs(k) = sum(sum((reference_window-comp_window).^2))/wsize^2;
+%             end
         else
             error(strcat(cost_function,' not a valid matching cost name.'));
         end
