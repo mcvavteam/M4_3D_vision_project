@@ -214,9 +214,12 @@ I{2} = sum(double(Irgb{2}), 3) / 3 / 255;
 Igt = imread('Data/truedisp.row3.col3.pgm');
 min_dis=0;
 max_dis=16;
-wsize=3;
+wsize=5;
 cost_function='SSD';
+tic
 disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function );
+toc
+
 imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -227,6 +230,14 @@ imshow(disparity,[min_dis max_dis]);
 %
 % Evaluate the results changing the window size (e.g. 3x3, 9x9, 20x20,
 % 30x30) and the matching cost. Comment the results.
+min_dis=0;
+max_dis=16;
+wsize=3;
+cost_function='NCC';
+tic
+disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function );
+toc
+figure;imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 5. Depth map computation with local methods
