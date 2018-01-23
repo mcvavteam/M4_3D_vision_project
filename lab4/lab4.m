@@ -172,6 +172,14 @@ axis equal;
 %       plot the histogram of reprojection errors, and
 %       plot the mean reprojection error
 
+x1_error = sqrt(sum((x1-euclid(P1*X)).^2));
+x2_error = sqrt(sum((x2-euclid(P2*X)).^2));
+reproj_error = x1_error+x2_error;
+
+hist(reproj_error,400)
+fprintf('Mean reprojection error: %.4f pixels\n',mean(reproj_error));
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3. Depth map computation with local methods (SSD)
 
