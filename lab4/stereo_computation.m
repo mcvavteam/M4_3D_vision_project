@@ -12,7 +12,7 @@ disparity=zeros(h-wsize+1,w-wsize+1);
 i_dis=1;
 for i=1:h-wsize+1
     j_dis = 1;
-    for j=1:h-wsize+1
+    for j=1:w-wsize+1
         % Get current window
         reference_window = Il(i:i+wsize-1,j:j+wsize-1);
         
@@ -32,7 +32,7 @@ for i=1:h-wsize+1
         match_pos = match_pos + floor(wsize/2);
 
         % Compute disparity
-        current_disparity = i-match_pos;
+        current_disparity = j-match_pos;
         if current_disparity<min_dis, current_disparity=min_dis; end
         if current_disparity>max_dis, current_disparity=max_dis; end
         
