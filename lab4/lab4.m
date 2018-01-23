@@ -206,7 +206,18 @@ fprintf('Mean reprojection error: %.4f pixels\n',mean(reproj_error));
 % Note 1: Use grayscale images
 % Note 2: For this first set of images use 0 as minimum disparity 
 % and 16 as the the maximum one.
-
+clear;
+Irgb{1} = imread('Data/scene1.row3.col3.ppm');
+Irgb{2} = imread('Data/scene1.row3.col4.ppm');
+I{1} = sum(double(Irgb{1}), 3) / 3 / 255;
+I{2} = sum(double(Irgb{2}), 3) / 3 / 255;
+Igt = imread('Data/truedisp.row3.col3.pgm');
+min_dis=0;
+max_dis=16;
+wsize=3;
+cost_function='SSD';
+disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function );
+imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 4. Depth map computation with local methods (NCC)
