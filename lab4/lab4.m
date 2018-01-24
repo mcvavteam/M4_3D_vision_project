@@ -206,7 +206,8 @@ fprintf('Mean reprojection error: %.4f pixels\n',mean(reproj_error));
 % Note 1: Use grayscale images
 % Note 2: For this first set of images use 0 as minimum disparity 
 % and 16 as the the maximum one.
-clear;
+
+% clear;
 Irgb{1} = imread('Data/scene1.row3.col3.ppm');
 Irgb{2} = imread('Data/scene1.row3.col4.ppm');
 I{1} = sum(double(Irgb{1}), 3) / 3 / 255;
@@ -214,12 +215,12 @@ I{2} = sum(double(Irgb{2}), 3) / 3 / 255;
 Igt = imread('Data/truedisp.row3.col3.pgm');
 min_dis=0;
 max_dis=16;
-wsize=5;
+wsize=3;
 cost_function='SSD';
 tic
-disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function );
+disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function,0);
 toc
-
+figure,
 imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -230,13 +231,16 @@ imshow(disparity,[min_dis max_dis]);
 %
 % Evaluate the results changing the window size (e.g. 3x3, 9x9, 20x20,
 % 30x30) and the matching cost. Comment the results.
+
 min_dis=0;
 max_dis=16;
 wsize=3;
 cost_function='NCC';
+
 tic
-disparity = stereo_computation( I{1}, I{2}, min_dis, max_dis, wsize, cost_function );
+disparity = stereo_computation(I{1}, I{2}, min_dis, max_dis, wsize, cost_function,0);
 toc
+
 figure;imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -249,6 +253,21 @@ figure;imshow(disparity,[min_dis max_dis]);
 % results.
 % Notice that in this new data the minimum and maximum disparities may
 % change.
+Irgb{1} = imread('Data/0001_rectified_s.png');
+Irgb{2} = imread('Data/0002_rectified_s.png');
+I{1} = sum(double(Irgb{1}), 3) / 3 / 255;
+I{2} = sum(double(Irgb{2}), 3) / 3 / 255;
+
+min_dis=0;
+max_dis=16;
+wsize=3;
+cost_function='NCC';
+
+tic
+disparity = stereo_computation(I{1}, I{2}, min_dis, max_dis, wsize, cost_function,0);
+toc
+
+figure;imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 6. Bilateral weights
@@ -260,6 +279,16 @@ figure;imshow(disparity,[min_dis max_dis]);
 % Comment the results and compare them to the previous results (no weights).
 %
 % Note: Use grayscale images (the paper uses color images)
+min_dis=0;
+max_dis=16;
+wsize=3;
+cost_function='NCC';
+
+tic
+disparity = stereo_computation(I{1}, I{2}, min_dis, max_dis, wsize, cost_function,1);
+toc
+
+figure;imshow(disparity,[min_dis max_dis]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% OPTIONAL:  Stereo computation with Belief Propagation
