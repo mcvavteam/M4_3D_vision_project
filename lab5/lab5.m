@@ -169,6 +169,10 @@ x2(3,:) = x2(3,:)./x2(3,:);
 % and stop when (abs(d - d_old)/d) < 0.1 where d_old is the distance
 % in the previous iteration.
 
+%In case of need more cams
+x = {x1, x2};
+[Xproj, Pproj] = factorization_method(x);
+
 %% Check projected points (estimated and data points)
 
 for i=1:2
