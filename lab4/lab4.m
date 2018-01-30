@@ -308,9 +308,14 @@ figure;imshow(disparity,[min_dis max_dis]);
 
 % Execute section 2
 
-window_size = 5;
-threshold = .1;
+window_size = 21;
+
 matching_function = 'SSD';
+if strcmpi(matching_function,'SSD')
+    threshold = .1;
+elseif strcmpi(matching_function,'NCC')
+    threshold = .01;
+end
 plot_im_matching = false;
 
 tic
