@@ -423,13 +423,13 @@ x1 = points{1}(1:2, matches12(1,:));
 x2 = points{2}(1:2, matches12(2,:));
 [F, inliers] = ransac_fundamental_matrix(homog(x1), homog(x2), th);
 
-x1 = x1(:,inliers);
-x2 = x2(:,inliers);
+x1m = x1(:,inliers);
+x2m = x2(:,inliers);
 
-x1 = homog(x1);
-x2 = homog(x2);
+x1m = homog(x1m);
+x2m = homog(x2m);
 
-x = {x1, x2};
+x = {x1m, x2m};
 [Xproj, Pproj] = factorization_method(x);
 
 % ToDo: show the data points (image correspondences) and the projected
@@ -440,8 +440,8 @@ x = {x1, x2};
 for i=1:2
     x_proj{i} = euclid(Pproj(3*i-2:3*i, :)*Xproj);
 end
-x_d{1} = euclid(x1);
-x_d{2} = euclid(x2);
+x_d{1} = euclid(x1m);
+x_d{2} = euclid(x2m);
 
 % image 1
 figure;
@@ -469,20 +469,43 @@ addpath('vanishing_points_v0.9');
 
 % This is an example on how to obtain the vanishing points (VPs) from three
 % orthogonal lines in image 1
-img_in =  'Data/0000_s.png'; % input image
-folder_out = '.'; % output folder
-manhattan = 1;
-acceleration = 0;
-focal_ratio = 1;
-params.PRINT = 1;
-params.PLOT = 1;
-[horizon, VPs] = detect_vps(img_in, folder_out, manhattan, acceleration, focal_ratio, params);
 
+% img_in =  'Data/0000_s.png'; % input image
+% folder_out = '.'; % output folder
+% manhattan = 1;
+% acceleration = 0;
+% focal_ratio = 1;
+% params.PRINT = 1;
+% params.PLOT = 1;
+% [horizon1, VPs1] = detect_vps(img_in1, folder_out, manhattan, acceleration, focal_ratio, params);
+
+% img_in2 =  'Data/0001_s.png'; % input image
+% [horizon2, VPs2] = detect_vps(img_in2, folder_out, manhattan, acceleration, focal_ratio, params);
+
+load('VPs.mat')
+ 
+[w, h] = size(I{1});
+
+% Compute the 3D vanishing points triangulating the vanishing points of the
+% images
+A = [triangulate(euclid(homog(VPs1(:,1))), euclid(homog(VPs2(:,1))), Pproj(1:3,:), Pproj(4:6,:), [w h])';
+     triangulate(euclid(homog(VPs1(:,2))), euclid(homog(VPs2(:,2))), Pproj(1:3,:), Pproj(4:6,:), [w h])';
+     triangulate(euclid(homog(VPs1(:,3))), euclid(homog(VPs2(:,3))), Pproj(1:3,:), Pproj(4:6,:), [w h])'];
+
+[U,D,V] = svd(A);
+p = V(:,end);
+p = p / p(end);
+
+Hp = eye(4,4);
+Hp(end,:) = p';
 
 %% Visualize the result
 
 % x1m are the data points in image 1
 % Xm are the reconstructed 3D points (projective reconstruction)
+Xm = Xproj;
+Xm = Xm./repmat(Xm(4,:),4,1);
+% Xm = Xm(1:3,:);
 
 r = interp2(double(Irgb{1}(:,:,1)), x1m(1,:), x1m(2,:));
 g = interp2(double(Irgb{1}(:,:,2)), x1m(1,:), x1m(2,:));
@@ -500,6 +523,56 @@ axis equal;
 
 % ToDo: compute the matrix Ha that updates the affine reconstruction
 % to a metric one and visualize the result in 3D as in the previous section
+
+% Use the following vanishing points given by three pair of orthogonal lines
+% and assume that the skew factor is zero and that pixels are square
+v1 = homog(VPs1(:,1));
+v2 = homog(VPs1(:,2));
+v3 = homog(VPs1(:,3));
+
+% We create matrix A in order to get omega using a combination of
+% constraints
+A = [v1(1)*v2(1), v1(1)*v2(2)+v1(2)*v2(1), v1(1)*v2(3)+v1(3)*v2(1), v1(2)*v2(2), v1(2)*v2(3)+v1(3)*v2(2), v1(3)*v2(3);
+     v1(1)*v3(1), v1(1)*v3(2)+v1(2)*v3(1), v1(1)*v3(3)+v1(3)*v3(1), v1(2)*v3(2), v1(2)*v3(3)+v1(3)*v3(2), v1(3)*v3(3);
+     v2(1)*v3(1), v2(1)*v3(2)+v2(2)*v3(1), v2(1)*v3(3)+v2(3)*v3(1), v2(2)*v3(2), v2(2)*v3(3)+v2(3)*v3(2), v2(3)*v3(3);
+          0                  1                        0                  0                  0                  0     ;
+          1                  0                        0                 -1                  0                  0     ];
+
+[U,D,V] = svd(A);
+omega_v = V(:,end);
+
+omega = [omega_v(1) omega_v(2) omega_v(3);
+         omega_v(2) omega_v(4) omega_v(5);
+         omega_v(3) omega_v(5) omega_v(6)];
+     
+% Compute matrix A with cholesky factorization
+P = Pproj(1:3,:)*inv(Hp);
+M = P(:,1:3);
+
+AAt = inv(M'*omega*M);
+A = chol(AAt);
+
+Ha = eye(4,4);
+Ha(1:3,1:3) = inv(A);
+
+%% Visualize the result
+
+% x1m are the data points in image 1
+% Xm are the reconstructed 3D points (projective reconstruction)
+Xm = Xproj;
+% Xm = Xm./repmat(Xm(4,:),4,1);
+% Xm = Xm(1:3,:);
+
+r = interp2(double(Irgb{1}(:,:,1)), x1m(1,:), x1m(2,:));
+g = interp2(double(Irgb{1}(:,:,2)), x1m(1,:), x1m(2,:));
+b = interp2(double(Irgb{1}(:,:,3)), x1m(1,:), x1m(2,:));
+Xe = euclid(Ha*Hp*Xm);
+figure; hold on;
+[w,h] = size(I{1});
+for i = 1:length(Xe)
+    scatter3(Xe(1,i), Xe(2,i), Xe(3,i), 2^2, [r(i) g(i) b(i)], 'filled');
+end;
+axis equal;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7. OPTIONAL: Projective reconstruction from two views
