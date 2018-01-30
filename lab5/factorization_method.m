@@ -18,7 +18,6 @@ NumPoints = size(x{1},2);
 % Normalize the points in each image (Similarity transformation.)
 for i=1:NumCams
     [x_norm{i} H{i}] = normalise2dpts(x{i});
-
 end
 
 % Initialize lambda (put a flag to initialize with ones or Sturm)

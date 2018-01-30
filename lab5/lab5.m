@@ -66,7 +66,7 @@ K = [709 0 450; 0 709 300; 0 0 1];
 Rz = [cos(0.88*pi/2) -sin(0.88*pi/2) 0; sin(0.88*pi/2) cos(0.88*pi/2) 0; 0 0 1];
 Ry = [cos(0.88*pi/2) 0 sin(0.88*pi/2); 0 1 0; -sin(0.88*pi/2) 0 cos(0.88*pi/2)];
 R1 = Rz*Ry;
-% t1 = -R1*[40; 10; 5]; old position (Gloria changed)
+% t1 = -R1*[40; 10; 5]; %old position (Gloria changed)
 t1 = - R1*[42; 5; 10];
 
 Rz = [cos(0.8*pi/2) -sin(0.8*pi/2) 0; sin(0.8*pi/2) cos(0.8*pi/2) 0; 0 0 1];
@@ -240,8 +240,6 @@ plot3([X6(1) X8(1)], [X6(2) X8(2)], [X6(3) X8(3)]);
 axis vis3d
 axis equal
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2. Affine reconstruction (synthetic data)
 
@@ -263,6 +261,18 @@ v3p = vanishing_point(x2(:,1),x2(:,2),x2(:,4),x2(:,3));
 % ToDo: use the vanishing points to compute the matrix Hp that 
 %       upgrades the projective reconstruction to an affine reconstruction
 
+% Compute the 3D vanishing points triangulating the vanishing points of the
+% images
+A = [triangulate(euclid(v1), euclid(v1p), Pproj(1:3,:), Pproj(4:6,:), [w h])';
+    triangulate(euclid(v2), euclid(v2p), Pproj(1:3,:), Pproj(4:6,:), [w h])';
+    triangulate(euclid(v3), euclid(v3p), Pproj(1:3,:), Pproj(4:6,:), [w h])'];
+
+[U,D,V] = svd(A);
+p = V(:,end);
+p = p / p(end);
+
+Hp = eye(4,4);
+Hp(end,:) = p';
 
 %% check results
 
@@ -310,12 +320,37 @@ axis equal
 
 % ToDo: compute the matrix Ha that 
 %       upgrades the projective reconstruction to an affine reconstruction
+
 % Use the following vanishing points given by three pair of orthogonal lines
 % and assume that the skew factor is zero and that pixels are square
-
 v1 = vanishing_point(x1(:,2),x1(:,5),x1(:,3),x1(:,6));
 v2 = vanishing_point(x1(:,1),x1(:,2),x1(:,3),x1(:,4));
 v3 = vanishing_point(x1(:,1),x1(:,4),x1(:,2),x1(:,3));
+
+% We create matrix A in order to get omega using a combination of
+% constraints
+A = [v1(1)*v2(1), v1(1)*v2(2)+v1(2)*v2(1), v1(1)*v2(3)+v1(3)*v2(1), v1(2)*v2(2), v1(2)*v2(3)+v1(3)*v2(2), v1(3)*v2(3);
+     v1(1)*v3(1), v1(1)*v3(2)+v1(2)*v3(1), v1(1)*v3(3)+v1(3)*v3(1), v1(2)*v3(2), v1(2)*v3(3)+v1(3)*v3(2), v1(3)*v3(3);
+     v2(1)*v3(1), v2(1)*v3(2)+v2(2)*v3(1), v2(1)*v3(3)+v2(3)*v3(1), v2(2)*v3(2), v2(2)*v3(3)+v2(3)*v3(2), v2(3)*v3(3);
+          0                  1                        0                  0                  0                  0     ;
+          1                  0                        0                 -1                  0                  0     ];
+
+[U,D,V] = svd(A);
+omega_v = V(:,end);
+
+omega = [omega_v(1) omega_v(2) omega_v(3);
+         omega_v(2) omega_v(4) omega_v(5);
+         omega_v(3) omega_v(5) omega_v(6)];
+     
+% Compute matrix A with cholesky factorization
+P = Pproj(1:3,:)*inv(Hp);
+M = P(:,1:3);
+
+AAt = inv(M'*omega*M);
+A = chol(AAt);
+
+Ha = eye(4,4);
+Ha(1:3,1:3) = inv(A);
 
 %% check results
 
@@ -372,9 +407,63 @@ Ncam = length(I);
 
 % ToDo: compute a projective reconstruction using the factorization method
 
+% Compute keypoints and matches.
+points = cell(2,1);
+descr = cell(2,1);
+for i = 1:2
+    [points{i}, descr{i}] = sift(I{i}, 'Threshold', 0.01);
+    points{i} = points{i}(1:2,:);
+end
+
+matches = siftmatch(descr{1}, descr{2});
+
+% Plot matches.
+figure();
+plotmatches(I{1}, I{2}, points{1}, points{2}, matches, 'Stacking', 'v');
+
+% Fit Fundamental matrix and remove outliers.
+x1m = points{1}(:, matches(1, :));
+x2m = points{2}(:, matches(2, :));
+[F, inliers] = ransac_fundamental_matrix(homog(x1m), homog(x2m), 2.0);
+
+% Plot inliers.
+inlier_matches = matches(:, inliers);
+figure;
+plotmatches(I{1}, I{2}, points{1}, points{2}, inlier_matches, 'Stacking', 'v');
+
+x1m = points{1}(:, inlier_matches(1, :));
+x2m = points{2}(:, inlier_matches(2, :));
+
+x1m = homog(x1m);
+x2m = homog(x2m);
+
 % ToDo: show the data points (image correspondences) and the projected
 % points (of the reconstructed 3D points) in images 1 and 2. Reuse the code
 % in section 'Check projected points' (synthetic experiment).
+
+%% Check projected points (estimated and data points)
+[Pproj, Xm] = factorization_method({x1m,x2m});
+
+for i=1:2
+    x_proj{i} = euclid(Pproj(3*i-2:3*i, :)*Xm);
+end
+x_d{1} = euclid(x1m);
+x_d{2} = euclid(x2m);
+
+% image 1
+figure;
+imshow(Irgb{1})
+hold on
+plot(x_d{1}(1,:),x_d{1}(2,:),'r*');
+plot(x_proj{1}(1,:),x_proj{1}(2,:),'bo');
+axis equal
+
+% image 2
+figure;
+imshow(Irgb{2})
+hold on
+plot(x_d{2}(1,:),x_d{2}(2,:),'r*');
+plot(x_proj{2}(1,:),x_proj{2}(2,:),'bo');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 5. Affine reconstruction (real data)
