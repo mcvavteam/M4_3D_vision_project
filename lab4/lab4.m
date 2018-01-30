@@ -306,6 +306,21 @@ figure;imshow(disparity,[min_dis max_dis]);
 
 % Implement the plane sweeping method explained in class.
 
+% Execute section 2
+
+window_size = 5;
+threshold = .1;
+matching_function = 'SSD';
+plot_im_matching = false;
+
+tic
+I_depth = plane_sweeping( I,P1,P2,window_size,threshold,matching_function,plot_im_matching);
+toc;
+
+figure;
+imshow(I_depth,[min(I_depth(:)), max(I_depth(:))],'Colormap',jet(256));
+colorbar;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% OPTIONAL:  Depth map fusion 
 
