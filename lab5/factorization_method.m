@@ -1,4 +1,4 @@
-function [ Xproj, Pproj ] = factorization_method( x )
+function [ Xproj, Pproj ] = factorization_method( x, init )
 % computes a preconstruction with the factorization method of Sturm and
 % Triggs '1996
 %
@@ -22,19 +22,20 @@ end
 
 % Initialize lambda (put a flag to initialize with ones or Sturm)
 lambda = ones(NumCams, NumPoints);
+if isequal(init, 'sturm')
+    % Initialize all projective depths 
+    for i = 1:NumCams
+        F{i} = fundamental_matrix( x{i}, x{1} );
+        [U, D, V] = svd(F{i});
+        e{i} = V(:,3) / V(3,3);
+    end
 
-% Initialize all projective depths 
-for i = 1:NumCams
-    F{i} = fundamental_matrix( x{i}, x{1} );
-    [U, D, V] = svd(F{i});
-    e{i} = V(:,3) / V(3,3);
-end
-
-for i = 1:NumCams
-    for j = 1:NumPoints
-        numerator = x{1}(:, j)' * F{i} * cross(e{i}, x{i}(:,j));
-        denominator = norm(cross(e{i}, x{i}(:,j))).^2 * lambda(1, j);
-        lambda(i,j) = numerator / denominator;
+    for i = 1:NumCams
+        for j = 1:NumPoints
+            numerator = x{1}(:, j)' * F{i} * cross(e{i}, x{i}(:,j));
+            denominator = norm(cross(e{i}, x{i}(:,j))).^2 * lambda(1, j);
+            lambda(i,j) = numerator / denominator;
+        end
     end
 end
 
