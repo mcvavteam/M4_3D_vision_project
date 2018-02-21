@@ -25,15 +25,15 @@ lambda = ones(NumCams, NumPoints);
 if isequal(init, 'sturm')
     % Initialize all projective depths 
     for i = 1:NumCams
-        F{i} = fundamental_matrix( x{i}, x{1} );
+        F{i} = fundamental_matrix( x_norm{i}, x_norm{1} );
         [U, D, V] = svd(F{i});
         e{i} = V(:,3) / V(3,3);
     end
 
     for i = 1:NumCams
         for j = 1:NumPoints
-            numerator = x{1}(:, j)' * F{i} * cross(e{i}, x{i}(:,j));
-            denominator = norm(cross(e{i}, x{i}(:,j))).^2 * lambda(1, j);
+            numerator = x_norm{1}(:, j)' * F{i} * cross(e{i}, x_norm{i}(:,j));
+            denominator = norm(cross(e{i}, x_norm{i}(:,j))).^2 * lambda(1, j);
             lambda(i,j) = numerator / denominator;
         end
     end
@@ -100,7 +100,6 @@ end
 
 % Unnormalize the camera matrices 
 Pproj = [];
-Pproj2 = [];
 for i = 1:NumCams
     %Pproj = [Pproj; (H{i}\P{i})];
     Pproj = [Pproj; (inv(H{i})*P{i})];
@@ -108,4 +107,3 @@ end
 
 
 end
-

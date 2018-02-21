@@ -22,9 +22,6 @@ function [ disparity ] = stereo_computation( Il, Ir, min_dis, max_dis, wsize, co
             [wh,ww] = size(windowl);
             weight = repmat(1/(wh*ww),wh,ww);
                  
-            [wh,ww] = size(windowl);
-            weight = repmat(1/(wh*ww),wh,ww);
-
             % Bilateral Weights
             if(bilateral)
                 gammac = 5;
@@ -38,15 +35,26 @@ function [ disparity ] = stereo_computation( Il, Ir, min_dis, max_dis, wsize, co
             end
             
             if strcmpi(cost_function,'SSD')                      
-                min_error = Inf;
+%                 min_error = Inf;
+%                 for k = kmin:kmax
+%                     windowr = double(Ir(i-w_step:i+w_step, k-w_step:k+w_step));
+%                     err_k = sum(sum(weight.*(windowl-windowr).^2));
+%                     if err_k < min_error
+%                         min_error = err_k;
+%                         kbest = k;
+%                     end
+%                 end
+                err = zeros(wsize.^2,kmax-kmin+1);
                 for k = kmin:kmax
                     windowr = double(Ir(i-w_step:i+w_step, k-w_step:k+w_step));
-                    err_k = sum(sum(weight.*(windowl-windowr).^2));
-                    if err_k < min_error
-                        min_error = err_k;
-                        kbest = k;
-                    end
+                    windowrp(:,k-kmin+1) = windowr(:);
                 end
+                err = bsxfun(@minus,windowrp,windowl(:));
+                err = bsxfun(@times,err.^2,weight(:));
+                err = sum(err,1);
+                [~, kbest] = min(err);
+                kbest = kbest+kmin-1;
+
                 
             elseif strcmpi(cost_function,'NCC')  
                 min_error = -Inf;
@@ -65,22 +73,10 @@ function [ disparity ] = stereo_computation( Il, Ir, min_dis, max_dis, wsize, co
                         kbest = k;
                     end
                 end
-                
-            elseif strcmpi(cost_function,'Bilateral_SSD')
-           
-                min_error = Inf;
-                for k = kmin:kmax
-                    windowr = double(Ir(i-w_step:i+w_step, k-w_step:k+w_step));
-                    err_k = sum(sum(weight.*(windowl-windowr).^2));
-                    if err_k < min_error
-                        min_error = err_k;
-                        kbest = k;
-                    end
-                end
             else
                 error(strcat(cost_function,' not a valid matching cost name.'));
             end
-            disparity(i-w_step, j-w_step) = abs(j-kbest);
+            disparity(i-w_step, j-w_step) = (j-kbest);
         end
     end
 end

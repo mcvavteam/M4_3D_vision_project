@@ -1,9 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Lab 5: Reconstruction from uncalibrated viewas
-
+%% Lab 5: Reconstruction from uncalibrated views
 
 addpath('sift'); % ToDo: change 'sift' to the correct path where you have the sift functions
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 0. Create synthetic data
@@ -172,7 +170,7 @@ x2(3,:) = x2(3,:)./x2(3,:);
 
 %In case of need more cams
 x = {x1, x2};
-[Xproj, Pproj] = factorization_method(x);
+[Xproj, Pproj] = factorization_method(x ,'sturm');
 
 %% Check projected points (estimated and data points)
 
@@ -343,7 +341,9 @@ omega = [omega_v(1) omega_v(2) omega_v(3);
          omega_v(3) omega_v(5) omega_v(6)];
      
 % Compute matrix A with cholesky factorization
-P = Pproj(1:3,:)*inv(Hp);
+% P = Pproj(1:3,:)*inv(Hp);
+P = inv(Hp)*Pproj(1:3,:)';
+P = P';
 M = P(:,1:3);
 
 AAt = inv(M'*omega*M);
@@ -430,7 +430,7 @@ x1m = homog(x1m);
 x2m = homog(x2m);
 
 x = {x1m, x2m};
-[Xproj, Pproj] = factorization_method(x);
+[Xproj, Pproj] = factorization_method(x,'sturm');
 
 % ToDo: show the data points (image correspondences) and the projected
 % points (of the reconstructed 3D points) in images 1 and 2. Reuse the code
@@ -470,19 +470,19 @@ addpath('vanishing_points_v0.9');
 % This is an example on how to obtain the vanishing points (VPs) from three
 % orthogonal lines in image 1
 
-% img_in =  'Data/0000_s.png'; % input image
-% folder_out = '.'; % output folder
-% manhattan = 1;
-% acceleration = 0;
-% focal_ratio = 1;
-% params.PRINT = 1;
-% params.PLOT = 1;
-% [horizon1, VPs1] = detect_vps(img_in1, folder_out, manhattan, acceleration, focal_ratio, params);
+img_in =  'Data/0000_s.png'; % input image
+folder_out = '.'; % output folder
+manhattan = 1;
+acceleration = 0;
+focal_ratio = 1;
+params.PRINT = 1;
+params.PLOT = 1;
+[horizon1, VPs1] = detect_vps(img_in1, folder_out, manhattan, acceleration, focal_ratio, params);
 
-% img_in2 =  'Data/0001_s.png'; % input image
-% [horizon2, VPs2] = detect_vps(img_in2, folder_out, manhattan, acceleration, focal_ratio, params);
+img_in2 =  'Data/0001_s.png'; % input image
+[horizon2, VPs2] = detect_vps(img_in2, folder_out, manhattan, acceleration, focal_ratio, params);
 
-load('VPs.mat')
+% load('VPs.mat')
  
 [w, h] = size(I{1});
 
@@ -560,7 +560,7 @@ Ha(1:3,1:3) = inv(A);
 % x1m are the data points in image 1
 % Xm are the reconstructed 3D points (projective reconstruction)
 Xm = Xproj;
-% Xm = Xm./repmat(Xm(4,:),4,1);
+Xm = Xm./repmat(Xm(4,:),4,1);
 % Xm = Xm(1:3,:);
 
 r = interp2(double(Irgb{1}(:,:,1)), x1m(1,:), x1m(2,:));
